@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ReActive — Coverage Terminal</title>
+<style>
+  :root {
+    /* ---- structural (from index.html workstation tokens) ---- */
+    --bg-core:    #050505;
+    --bg-panel:   #0a0a0a;
+    --bg-rail:    #070707;
+    --bg-head:    #0d0d0d;
+    --bg-rowhov:  #111315;
+    --bg-rowsel:  #17120a;
+    --border:     #262626;
+    --border-soft:#191919;
+
+    /* ---- semantic text ladder (Bloomberg-style coding) ---- */
+    --txt-key:  #e9ebec;   /* key values + fund anchor */
+    --txt-main: #c7cacc;   /* primary */
+    --txt-meta: #8a8f93;   /* secondary metadata */
+    --txt-mute: #6a6f73;   /* labels */
+    --txt-dim:  #4c5256;   /* deep dim */
+
+    /* ---- function colors ---- */
+    --nav:       #5bbccf;  /* navigable / structural values (cyan) */
+    --nav-dim:   #356c79;
+    --accent:    #d4773a;  /* amber base */
+    --accent-br: #fb923c;  /* attention bright */
+    --accent-tint: rgba(251,146,60,0.10);
+
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    height: 100vh; overflow: hidden;
+    background: var(--bg-core);
+    color: var(--txt-main);
+    font-family: var(--mono);
+    font-size: 12px;
+    -webkit-font-smoothing: antialiased;
+  }
+  body { display: flex; }
+
+  /* ============ LEFT RAIL ============ */
+  .rail {
+    flex: 0 0 188px;
+    background: var(--bg-rail);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+  .rail-brand {
+    height: 48px;
+    display: flex; align-items: center;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rail-brand img { max-height: 24px; max-width: 156px; width: auto; height: auto; display: block; }
+  .wordmark {
+    display: none;
+    font-family: var(--sans);
+    font-weight: 700; font-size: 15px; letter-spacing: .3px;
+    color: var(--txt-key);
+  }
+  .wordmark .slash { color: var(--accent-br); }
+  .rail-brand.fallback img { display: none; }
+  .rail-brand.fallback .wordmark { display: inline; }
+
+  .rail-section {
+    padding: 14px 14px 6px;
+    font-family: var(--sans);
+    font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase;
+    color: var(--txt-dim);
+  }
+  .mod {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 14px;
+    font-family: var(--sans);
+    font-size: 12px; letter-spacing: .3px;
+    color: var(--txt-mute);
+    border-left: 2px solid transparent;
+    cursor: default;
+    user-select: none;
+  }
+  .mod .g {
+    font-family: var(--mono);
+    font-size: 11px; color: var(--txt-dim); width: 14px; text-align: center;
+  }
+  .mod.active {
+    color: var(--txt-key);
+    border-left-color: var(--accent-br);
+    background: linear-gradient(90deg, var(--accent-tint), transparent 70%);
+  }
+  .mod.active .g { color: var(--accent-br); }
+
+  .rail-foot {
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    padding: 12px 14px;
+    font-size: 10px; line-height: 1.7;
+    color: var(--txt-dim);
+    letter-spacing: .4px;
+  }
+  .rail-foot b { color: var(--txt-meta); font-weight: 600; }
+
+  /* ============ MAIN COLUMN ============ */
+  .main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+
+  /* top bar */
+  .topbar {
+    height: 48px; flex: 0 0 48px;
+    background: var(--bg-head);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 16px;
+  }
+  .crumb { font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--txt-meta); }
+  .crumb b { color: var(--txt-key); font-weight: 600; }
+  .crumb .sep { color: var(--txt-dim); margin: 0 8px; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .env {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 10px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--txt-mute);
+  }
+  .env .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-br); box-shadow: 0 0 6px var(--accent-br); }
+  .clock { font-size: 11px; color: var(--txt-meta); font-variant-numeric: tabular-nums; letter-spacing: .5px; }
+
+  /* status strip */
+  .status { display: flex; background: var(--bg-panel); border-bottom: 1px solid var(--border); }
+  .stat { padding: 9px 18px; border-right: 1px solid var(--border-soft); }
+  .stat .k { display: block; font-family: var(--sans); font-size: 9.5px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--txt-dim); margin-bottom: 3px; }
+  .stat .v { font-size: 15px; color: var(--txt-key); font-variant-numeric: tabular-nums; }
+  .stat .v small { font-size: 10px; color: var(--txt-mute); }
+  .stat .v .u { color: var(--nav); }
+
+  /* toolbar */
+  .toolbar { display: flex; align-items: center; gap: 16px; padding: 8px 16px; background: var(--bg-core); border-bottom: 1px solid var(--border-soft); }
+  .search { position: relative; flex: 0 0 300px; max-width: 100%; }
+  .search .mag { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--txt-dim); font-size: 12px; pointer-events: none; }
+  .search input {
+    width: 100%; background: var(--bg-panel); border: 1px solid var(--border);
+    color: var(--txt-key); font-family: var(--mono); font-size: 12px;
+    padding: 6px 10px 6px 26px; outline: none;
+  }
+  .search input::placeholder { color: var(--txt-dim); }
+  .search input:focus { border-color: var(--nav-dim); }
+  .readout { font-size: 11px; letter-spacing: .5px; color: var(--txt-mute); display: flex; gap: 16px; }
+  .readout b { color: var(--txt-key); font-weight: 600; }
+  .readout .sort .arr { color: var(--accent-br); }
+  .readout .sort .key { color: var(--nav); }
+
+  /* selection context bar */
+  .selbar {
+    display: flex; align-items: center; gap: 0;
+    padding: 7px 16px; min-height: 34px;
+    background: var(--bg-panel); border-bottom: 1px solid var(--border);
+    font-size: 11px; letter-spacing: .4px; color: var(--txt-meta);
+  }
+  .selbar.empty { color: var(--txt-dim); }
+  .selbar .lead { color: var(--accent-br); margin-right: 9px; }
+  .selbar .nm { color: var(--txt-key); font-weight: 600; margin-right: 12px; }
+  .selbar .seg { padding: 0 11px; border-left: 1px solid var(--border-soft); }
+  .selbar .seg:first-of-type { border-left: none; padding-left: 0; }
+  .selbar .seg .lbl { color: var(--txt-dim); margin-right: 6px; }
+  .selbar .seg .cy { color: var(--nav); font-variant-numeric: tabular-nums; }
+  .selbar .seg .ky { color: var(--txt-key); font-variant-numeric: tabular-nums; }
+
+  /* ============ TABLE MODULE ============ */
+  .table-wrap { flex: 1 1 auto; overflow: auto; background: var(--bg-core); }
+  table { width: 100%; border-collapse: collapse; min-width: 1040px; }
+
+  thead th {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--bg-head);
+    border-bottom: 1px solid var(--border);
+    text-align: left; vertical-align: bottom;
+    font-family: var(--sans);
+    font-weight: 600; font-size: 9.5px; letter-spacing: 1.1px; text-transform: uppercase;
+    color: var(--txt-mute);
+    padding: 8px 12px; white-space: nowrap; user-select: none; cursor: pointer;
+  }
+  thead th.num { text-align: right; }
+  thead th.ctr { text-align: center; }
+  thead th:hover { color: var(--txt-key); }
+  thead th.idx { width: 30px; cursor: default; color: var(--txt-dim); }
+  thead th.idx:hover { color: var(--txt-dim); }
+  thead th .arr { color: var(--accent-br); margin-left: 5px; font-size: 8px; }
+  /* numeric block divider */
+  thead th.div-l, tbody td.div-l { border-left: 1px solid var(--border-soft); }
+
+  tbody tr { border-bottom: 1px solid var(--border-soft); }
+  tbody tr:hover { background: var(--bg-rowhov); }
+  tbody tr.sel { background: var(--bg-rowsel); }
+  tbody tr.sel td:first-child { box-shadow: inset 2px 0 0 var(--accent-br); }
+
+  tbody td { padding: 7px 12px; white-space: nowrap; vertical-align: middle; }
+  td.idx { color: var(--txt-dim); font-size: 10px; }
+  td.fund { color: var(--txt-key); font-weight: 600; font-size: 12.5px; }
+  td.rgn { }
+  .rtag {
+    display: inline-block; font-size: 9.5px; letter-spacing: .6px;
+    color: var(--txt-meta); background: #131517; border: 1px solid var(--border-soft);
+    padding: 2px 6px; border-radius: 2px;
+  }
+  td.strat { color: var(--txt-meta); white-space: normal; max-width: 220px; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.vintage { color: var(--txt-meta); }
+  td.spv, td.jur { color: var(--nav); }
+
+  /* AUM cell: key value + magnitude bar */
+  td.aum { color: var(--txt-key); position: relative; }
+  .aum-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  .aum-bar { width: 60px; height: 2px; background: #15191b; position: relative; }
+  .aum-bar > span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--nav-dim); }
+  .aum-bar.hi > span { background: var(--accent-br); }
+
+  /* STRUCT density meter */
+  td.struct { text-align: center; }
+  .meter { display: inline-flex; gap: 2px; }
+  .meter i { width: 5px; height: 12px; background: #1c1f22; display: inline-block; }
+  .meter.t1 i:nth-child(1) { background: var(--txt-mute); }
+  .meter.t2 i:nth-child(1), .meter.t2 i:nth-child(2) { background: var(--nav); }
+  .meter.t3 i { background: var(--accent-br); }
+
+  .empty-row td { padding: 30px 12px; text-align: center; color: var(--txt-dim); letter-spacing: .5px; }
+
+  /* ============ FOOTER ============ */
+  footer.foot {
+    flex: 0 0 auto;
+    border-top: 1px solid var(--border);
+    background: var(--bg-head);
+    padding: 9px 16px;
+    display: flex; flex-wrap: wrap; gap: 5px 22px;
+    font-size: 10px; letter-spacing: .5px; color: var(--txt-dim);
+  }
+  footer.foot .amber { color: var(--accent); }
+  footer.foot .legend { color: var(--txt-dim); display: flex; align-items: center; gap: 6px; }
+  footer.foot .legend i { width: 8px; height: 8px; display: inline-block; }
+  .lg-key { background: var(--txt-key); }
+  .lg-nav { background: var(--nav); }
+  .lg-amb { background: var(--accent-br); }
+
+  /* responsive */
+  @media (max-width: 720px) {
+    .rail { display: none; }
+    .status { overflow-x: auto; }
+    .stat { min-width: 120px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ LEFT RAIL ============ -->
+  <nav class="rail">
+    <div class="rail-brand" id="brand">
+      <img src="assets/logos/reactive_logo_text.webp" alt="ReActive"
+           onerror="document.getElementById('brand').classList.add('fallback')">
+      <span class="wordmark">Re<span class="slash">/</span>Active</span>
+    </div>
+    <div class="rail-section">Workstation</div>
+    <div class="mod active"><span class="g">▣</span>Coverage</div>
+    <div class="mod"><span class="g">◫</span>Profile</div>
+    <div class="mod"><span class="g">◈</span>Scan</div>
+    <div class="mod"><span class="g">▤</span>Report</div>
+    <div class="rail-foot">
+      <div><b>ENV</b> &nbsp; Reference</div>
+      <div><b>SET</b> &nbsp; Private Funds</div>
+      <div><b>MODE</b> &nbsp; Detection-only</div>
+    </div>
+  </nav>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <div class="topbar">
+      <div class="crumb">Coverage <span class="sep">/</span> <b>Private Funds</b> <span class="sep">/</span> Universe</div>
+      <div class="topbar-right">
+        <div class="env"><span class="dot"></span> Reference Universe</div>
+        <div class="clock" id="clock">--:--:--</div>
+      </div>
+    </div>
+
+    <section class="status" id="status"><!-- injected --></section>
+
+    <div class="toolbar">
+      <div class="search">
+        <span class="mag">⌕</span>
+        <input id="q" type="text" placeholder="Filter — fund, region, strategy, vintage…" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="readout">
+        <span><b id="shown">25</b> / 25 entities</span>
+        <span class="sort">SORT <span class="key" id="sortKey">Fund</span> <span class="arr" id="sortArr">▲</span></span>
+      </div>
+    </div>
+
+    <div class="selbar empty" id="selbar">Click a row to load entity context</div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="idx">#</th>
+            <th data-key="name">Fund</th>
+            <th data-key="rgn">Reg</th>
+            <th data-key="strat">Strategy</th>
+            <th class="num div-l" data-key="vintage">Vint</th>
+            <th class="num" data-key="aum">AUM (€)</th>
+            <th class="num div-l" data-key="spv">SPVs</th>
+            <th class="num" data-key="jur">Jur</th>
+            <th class="ctr div-l" data-key="struct">Struct</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <footer class="foot">
+      <span class="amber">No performance ranking implied.</span>
+      <span>Illustrative coverage universe — detection-only, non-advisory.</span>
+      <span class="legend"><i class="lg-key"></i>key value</span>
+      <span class="legend"><i class="lg-nav"></i>structural / navigable</span>
+      <span class="legend"><i class="lg-amb"></i>attention / outlier</span>
+      <span>AUM normalized EUR · Struct = SPV×jurisdiction footprint (descriptive).</span>
+    </footer>
+  </div>
+
+<script>
+/* ---------------------------------------------------------------
+   Locked reference universe. Geography / strategy / vintage carried
+   verbatim from the locked table. AUM (EUR millions), SPV and
+   jurisdiction counts are invented at build time under consistency
+   rules (older vintage -> larger AUM; corridor / multi-country ->
+   more jurisdictions; core-European residential -> elevated SPVs;
+   2020-21 -> smaller structures; giga-project -> very large AUM,
+   concentrated structure). Region code and structural-density tier
+   are display derivations, not new data.
+---------------------------------------------------------------- */
+const FUNDS = [
+  { name:"Aeloria Capital",                  geo:"Italy / Greece",                         strat:"Hospitality & Tourism Recovery", vintage:2009, aum:1400, spv:28, jur:3 },
+  { name:"Al-Miholo Real Estate Partners",   geo:"UAE / MENA",                             strat:"Core-Plus Office",               vintage:2015, aum:1900, spv:34, jur:5 },
+  { name:"Al-Rumeya Holdings",               geo:"Qatar / Bahrain / Kuwait",               strat:"Hospitality & Leisure",          vintage:2017, aum:1200, spv:22, jur:4 },
+  { name:"Al-Sharaqa Real Estate",           geo:"Saudi Arabia / UAE",                     strat:"Giga-Project Development",       vintage:2021, aum:4800, spv:14, jur:3 },
+  { name:"Aozaki Real Estate",               geo:"Japan / South Korea",                    strat:"Core-Plus Logistics",            vintage:2014, aum:2100, spv:30, jur:4 },
+  { name:"Asquinaxe Property Investors",     geo:"Mexico / Colombia / Panama",             strat:"Hospitality & Tourism",          vintage:2020, aum:780,  spv:16, jur:4 },
+  { name:"Bakaria Real Estate",              geo:"Azerbaijan / Kazakhstan / Georgia",      strat:"Industrial Corridor & Ports",    vintage:2014, aum:1600, spv:26, jur:6 },
+  { name:"Briarstone Property Fund",         geo:"UK / Ireland",                           strat:"Build-to-Rent Residential",      vintage:2013, aum:1700, spv:38, jur:3 },
+  { name:"Central Eastern Gateway Capital",  geo:"Poland / Czech Republic / Hungary",      strat:"Value-Add Retail & Office",      vintage:2006, aum:2600, spv:33, jur:5 },
+  { name:"Cordavera Capital",                geo:"Chile / Peru / Colombia",                strat:"Mixed-Use & Residential",        vintage:2012, aum:1500, spv:24, jur:5 },
+  { name:"Corramunda Property Partners",     geo:"Australia / New Zealand",                strat:"Core Industrial & Logistics",    vintage:2008, aum:2400, spv:31, jur:4 },
+  { name:"Fjordholm Property Partners",      geo:"Denmark / Sweden",                       strat:"Life Sciences & Lab Space",      vintage:2020, aum:890,  spv:14, jur:3 },
+  { name:"Hanseborg Core European Fund",     geo:"Germany / Netherlands / Nordics",        strat:"Core Residential",               vintage:2008, aum:3400, spv:52, jur:6 },
+  { name:"Khorvani Capital",                 geo:"Turkey / Georgia / Kazakhstan",          strat:"Logistics Corridor",             vintage:2010, aum:1400, spv:23, jur:7 },
+  { name:"Maluveni Property Fund",           geo:"South Africa / Lesotho",                 strat:"Retail & Mixed-Use",             vintage:2013, aum:720,  spv:17, jur:3 },
+  { name:"Marrenton Property Investors",     geo:"USA · New York / Boston / Chicago",      strat:"Prime Commercial",               vintage:2012, aum:3100, spv:36, jur:2 },
+  { name:"Moschatus Property Investors",     geo:"Canada · Toronto / Vancouver / Calgary", strat:"Core-Plus Mixed-Use",            vintage:2015, aum:1800, spv:27, jur:2 },
+  { name:"Quorum Property Group",            geo:"Luxembourg / Belgium / France",          strat:"Value-Add Office & Retail",      vintage:2018, aum:1600, spv:25, jur:3 },
+  { name:"Selantra Property Group",          geo:"Singapore / Southeast Asia",             strat:"Mixed-Use Development",          vintage:2019, aum:1300, spv:21, jur:5 },
+  { name:"Sendeira Capital",                 geo:"Spain / Portugal",                       strat:"Opportunistic · Distressed",     vintage:2009, aum:1900, spv:35, jur:3 },
+  { name:"Storfjord Property Partners",      geo:"Norway / Finland / Iceland",             strat:"Sustainable Logistics",          vintage:2018, aum:1400, spv:22, jur:5 },
+  { name:"Tsavora Property Fund",            geo:"South Africa / Kenya / Nigeria",         strat:"Mixed-Use & Retail",             vintage:2007, aum:1500, spv:28, jur:5 },
+  { name:"Veskimaa Real Estate",             geo:"Estonia / Latvia / Lithuania",           strat:"Logistics & Industrial",         vintage:2010, aum:1200, spv:24, jur:5 },
+  { name:"Veythong Properties",              geo:"Vietnam / Cambodia / Thailand",          strat:"Industrial & Warehousing",       vintage:2016, aum:1100, spv:20, jur:5 },
+  { name:"Vinterlund Capital",               geo:"Sweden / Norway / Finland",              strat:"Sustainable Office",             vintage:2011, aum:1700, spv:26, jur:4 }
+];
+
+const REGION = {
+  "Aeloria Capital":"SEUR", "Al-Miholo Real Estate Partners":"MENA", "Al-Rumeya Holdings":"GCC",
+  "Al-Sharaqa Real Estate":"GCC", "Aozaki Real Estate":"APAC", "Asquinaxe Property Investors":"LATM",
+  "Bakaria Real Estate":"CASP", "Briarstone Property Fund":"UK&I", "Central Eastern Gateway Capital":"CEE",
+  "Cordavera Capital":"LATM", "Corramunda Property Partners":"ANZ", "Fjordholm Property Partners":"NORD",
+  "Hanseborg Core European Fund":"C.EUR", "Khorvani Capital":"EURA", "Maluveni Property Fund":"AFR",
+  "Marrenton Property Investors":"NAM", "Moschatus Property Investors":"NAM", "Quorum Property Group":"W.EUR",
+  "Selantra Property Group":"SEA", "Sendeira Capital":"IBER", "Storfjord Property Partners":"NORD",
+  "Tsavora Property Fund":"AFR", "Veskimaa Real Estate":"BALT", "Veythong Properties":"SEA",
+  "Vinterlund Capital":"NORD"
+};
+
+const MAX_AUM = Math.max(...FUNDS.map(f => f.aum));
+
+function structComposite(f){ return f.spv + f.jur * 3; }
+function structTier(f){
+  const c = structComposite(f);
+  if (c >= 44) return 3;
+  if (c >= 34) return 2;
+  return 1;
+}
+const STRUCT_LABEL = { 1:"Concentrated", 2:"Moderate", 3:"Distributed" };
+
+/* derive parallel display fields without touching locked data */
+function derive(){
+  return FUNDS.map((f,i)=>({
+    ...f, _i:i,
+    rgn: REGION[f.name],
+    sc: structComposite(f),
+    tier: structTier(f)
+  }));
+}
+
+/* ---------- formatting ---------- */
+function fmtAUM(m){
+  if (m >= 1000){ const b = m/1000; return "€" + (b % 1 === 0 ? b.toFixed(0) : b.toFixed(1)) + "bn"; }
+  return "€" + m + "m";
+}
+function fmtSum(m){ return "€" + (m/1000).toFixed(1) + "bn"; }
+function esc(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+/* ---------- state ---------- */
+let sortKey = "name", sortDir = 1, selected = -1, filter = "";
+const KEY_LABEL = { name:"Fund", rgn:"Region", strat:"Strategy", vintage:"Vintage", aum:"AUM", spv:"SPVs", jur:"Jur", struct:"Struct" };
+
+function currentRows(){
+  let rows = derive();
+  if (filter){
+    const q = filter.toLowerCase();
+    rows = rows.filter(f =>
+      f.name.toLowerCase().includes(q) || f.geo.toLowerCase().includes(q) ||
+      f.strat.toLowerCase().includes(q) || f.rgn.toLowerCase().includes(q) ||
+      String(f.vintage).includes(q));
+  }
+  rows.sort((a,b)=>{
+    let av, bv;
+    if (sortKey === "struct"){ av = a.sc; bv = b.sc; }
+    else { av = a[sortKey]; bv = b[sortKey]; }
+    if (typeof av === "string"){ av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return -1*sortDir;
+    if (av > bv) return  1*sortDir;
+    return a.name < b.name ? -1 : 1;
+  });
+  return rows;
+}
+
+/* ---------- aggregate strip (recomputes with filter) ---------- */
+function buildStatus(rows){
+  const set = rows.length ? rows : [];
+  const sumAum = set.reduce((a,f)=>a+f.aum,0);
+  const sumSpv = set.reduce((a,f)=>a+f.spv,0);
+  const jurMax = set.length ? Math.max(...set.map(f=>f.jur)) : 0;
+  const oldest = set.length ? Math.min(...set.map(f=>f.vintage)) : "–";
+  const newest = set.length ? Math.max(...set.map(f=>f.vintage)) : "–";
+  const isFiltered = rows.length !== FUNDS.length;
+  const stats = [
+    ["Entities", set.length + (isFiltered ? '<small> / '+FUNDS.length+'</small>' : '')],
+    [(isFiltered?"Σ AUM · filtered":"Σ AUM"), fmtSum(sumAum)],
+    ["Σ SPVs", '<span class="u">'+sumSpv+'</span>'],
+    ["Max jurisd.", '<span class="u">'+jurMax+'</span>'],
+    ["Vintage span", oldest + '<small> – </small>' + newest]
+  ];
+  document.getElementById("status").innerHTML = stats.map(s =>
+    '<div class="stat"><span class="k">'+s[0]+'</span><span class="v">'+s[1]+'</span></div>').join("");
+}
+
+/* ---------- selection context ---------- */
+function buildSelbar(){
+  const el = document.getElementById("selbar");
+  if (selected < 0){ el.className = "selbar empty"; el.textContent = "Click a row to load entity context"; return; }
+  const f = derive()[selected];
+  el.className = "selbar";
+  el.innerHTML =
+    '<span class="lead">●</span><span class="nm">'+esc(f.name)+'</span>' +
+    '<span class="seg"><span class="lbl">REG</span>'+f.rgn+'</span>' +
+    '<span class="seg"><span class="lbl">GEO</span>'+esc(f.geo)+'</span>' +
+    '<span class="seg"><span class="lbl">STRAT</span>'+esc(f.strat)+'</span>' +
+    '<span class="seg"><span class="lbl">VINT</span>'+f.vintage+'</span>' +
+    '<span class="seg"><span class="lbl">AUM</span><span class="ky">'+fmtAUM(f.aum)+'</span></span>' +
+    '<span class="seg"><span class="lbl">STRUCT</span><span class="cy">'+f.spv+' SPV / '+f.jur+' jur</span> · '+STRUCT_LABEL[f.tier]+'</span>';
+}
+
+/* ---------- table ---------- */
+function render(){
+  const rows = currentRows();
+  buildStatus(rows);
+  const body = document.getElementById("rows");
+  if (!rows.length){
+    body.innerHTML = '<tr class="empty-row"><td colspan="9">No entities match this filter.</td></tr>';
+  } else {
+    body.innerHTML = rows.map((f,n)=>{
+      const sel = (f._i === selected) ? ' class="sel"' : '';
+      const barPct = Math.round(f.aum / MAX_AUM * 100);
+      const hi = f.aum >= 3000 ? ' hi' : '';
+      return '<tr data-i="'+f._i+'"'+sel+'>' +
+        '<td class="idx">'+String(n+1).padStart(2,"0")+'</td>' +
+        '<td class="fund">'+esc(f.name)+'</td>' +
+        '<td class="rgn"><span class="rtag">'+f.rgn+'</span></td>' +
+        '<td class="strat">'+esc(f.strat)+'</td>' +
+        '<td class="num vintage div-l">'+f.vintage+'</td>' +
+        '<td class="num aum"><div class="aum-wrap"><span>'+fmtAUM(f.aum)+'</span>' +
+          '<div class="aum-bar'+hi+'"><span style="width:'+barPct+'%"></span></div></div></td>' +
+        '<td class="num spv div-l">'+f.spv+'</td>' +
+        '<td class="num jur">'+f.jur+'</td>' +
+        '<td class="struct div-l" title="'+STRUCT_LABEL[f.tier]+' — SPV×jurisdiction footprint">' +
+          '<span class="meter t'+f.tier+'"><i></i><i></i><i></i></span></td>' +
+      '</tr>';
+    }).join("");
+  }
+  document.getElementById("shown").textContent = rows.length;
+  document.getElementById("sortKey").textContent = KEY_LABEL[sortKey];
+  document.getElementById("sortArr").textContent = sortDir === 1 ? "▲" : "▼";
+  document.querySelectorAll("thead th[data-key]").forEach(th=>{
+    const old = th.querySelector(".arr"); if (old) old.remove();
+    if (th.dataset.key === sortKey){
+      const s = document.createElement("span"); s.className = "arr";
+      s.textContent = sortDir === 1 ? "▲" : "▼"; th.appendChild(s);
+    }
+  });
+  buildSelbar();
+}
+
+/* ---------- events ---------- */
+document.querySelectorAll("thead th[data-key]").forEach(th=>{
+  th.addEventListener("click", ()=>{
+    const k = th.dataset.key;
+    const textCols = (k==="name"||k==="rgn"||k==="strat");
+    if (sortKey === k){ sortDir *= -1; }
+    else { sortKey = k; sortDir = textCols ? 1 : -1; }
+    render();
+  });
+});
+document.getElementById("rows").addEventListener("click", e=>{
+  const tr = e.target.closest("tr[data-i]"); if (!tr) return;
+  const i = parseInt(tr.dataset.i,10);
+  selected = (selected === i) ? -1 : i;
+  render();
+});
+document.getElementById("q").addEventListener("input", e=>{
+  filter = e.target.value.trim(); selected = -1; render();
+});
+
+/* clock */
+function tick(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,"0");
+  document.getElementById("clock").textContent = p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds());
+}
+tick(); setInterval(tick, 1000);
+
+render();
+</script>
+</body>
+</html>
