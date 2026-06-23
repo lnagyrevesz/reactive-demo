@@ -1,156 +1,368 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ReActive — Forensic Intelligence</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-*, *::before, *::after {
-  box-sizing: border-box; margin: 0; padding: 0;
-  border: none; outline: none; background: transparent; box-shadow: none;
-}
-:root {
-  --bg: #000; --accent: #d4773a; --text: #e8e8e8;
-  --dim: #3a3a3a; --mid: #707070; --sep: #444;
-  --mono: 'JetBrains Mono', monospace;
-}
-html, body { width:100%; height:100%; overflow:hidden; background-color:#000; color:var(--text); font-family:var(--mono); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReActive | Coverage (Listed)</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --bg-core: #f5f5f5; --bg-panel: #ffffff; --border: #e0e0e0; --accent: #d4773a; --text-muted: #888888; }
+        body { margin: 0; background-color: var(--bg-core); color: #111111; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; display: flex; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* SCROLLBARS */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f0f0f0; }
+        ::-webkit-scrollbar-thumb { background: #cccccc; border-radius: 3px; }
+        
+        /* ANIMATIONS */
+        .target-pulse { animation: pulse 2.5s infinite; }
+        @keyframes pulse { 
+            0% { background-color: rgba(212, 119, 58, 0.04); } 
+            50% { background-color: rgba(212, 119, 58, 0.10); } 
+            100% { background-color: rgba(212, 119, 58, 0.04); } 
+        }
+        
+        .badge-pulse { animation: badge 2s infinite; }
+        @keyframes badge { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
-#sb { position:fixed; top:0; left:0; right:0; height:28px; background-color:#000 !important; border-bottom:1px solid #333 !important; display:flex; align-items:center; padding:0 24px; gap:20px; z-index:100; font-size:9px; letter-spacing:0.1em; color:var(--dim); }
-.sl { font-size:10px; font-weight:500; color:var(--text); letter-spacing:0.04em; }
-.sl b { color:var(--accent); font-weight:500; }
-.sp { color:#333; }
-.sd { width:5px; height:5px; border-radius:50%; background-color:#4caf7d !important; display:inline-block; margin-right:4px; }
-.ss { flex:1; }
-#mv { color:var(--accent); }
+        .live-dot { animation: live 1.5s infinite; }
+        @keyframes live { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-#btn { position:fixed; top:44px; z-index:100; display:inline-flex; align-items:center; gap:8px; padding:7px 16px; color:rgba(212,119,58,0.7); font-family:var(--mono); font-size:9px; letter-spacing:0.14em; text-transform:uppercase; border:1px solid rgba(212,119,58,0.28) !important; cursor:pointer; white-space:nowrap; }
-#btn:hover { background-color:rgba(212,119,58,0.08) !important; color:var(--accent); border-color:rgba(212,119,58,0.55) !important; }
-
-#stage { position:fixed; top:28px; left:0; right:0; bottom:0; }
-
-#lw {
-  position:absolute; bottom:80px; left:-1vw; width:102vw;
-  -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
-}
-#li { width:100%; height:auto; display:block; mix-blend-mode:lighten; }
-
-/* RAIL — 64px, no border, items use explicit height separators */
-#rail {
-  position: absolute;
-  bottom: 8px; left: 0; right: 0;
-  height: 64px;
-  display: flex;
-  align-items: center;
-}
-
-.it {
-  flex: 1;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 0 20px;
-  /* height fills rail so ::before can reference it */
-  height: 100%;
-  justify-content: center;
-}
-
-/*
-  Separator: explicit 40px height, centered vertically via
-  top:50% + translateY(-50%). This is immune to flex centering issues.
-  left: 0 sits at the boundary between items.
-  Applied to ALL items so first item gets its left pipe too.
-*/
-.it::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1px;
-  height: 48px;
-  background-color: var(--sep);
-}
-
-/* closing pipe on the right after last item */
-.it:last-child::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1px;
-  height: 48px;
-  background-color: var(--sep);
-}
-
-/* first pipe: nudge away from page left edge */
-.it:first-child { padding-left: 28px; }
-
-.rl { font-size:7px; letter-spacing:0.22em; color:var(--dim); text-transform:uppercase; line-height:1; display:block; margin-bottom:3px; }
-.r1, .r2 { font-size:10px; font-weight:400; color:var(--mid); letter-spacing:0.05em; line-height:1.4; white-space:nowrap; display:block; }
-</style>
+        /* UTILITY */
+        .cursor-not-allowed { cursor: not-allowed !important; }
+    </style>
 </head>
 <body>
+    <div id="root" class="w-full h-full flex"></div>
 
-<div id="sb">
-  <span class="sl">Re<b>Active</b></span>
-  <span class="sp">|</span><span style="color:#2e2e2e">Forensic Intelligence</span>
-  <span class="sp">|</span><span><span class="sd"></span>SYSTEM ONLINE</span>
-  <span class="ss"></span>
-  <span>ENGINE V1</span>
-  <span class="sp">|</span><span>MODE:&nbsp;<span id="mv">FORENSIC ANALYSIS</span></span>
-  <span class="sp">|</span><span id="st">--:--:-- UTC</span>
-</div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-<button id="btn">Launch Terminal &nbsp;→</button>
+        // --- ICONS ---
+        const Icons = {
+            Grid: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>,
+            Database: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>,
+            Activity: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>,
+            Filter: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>,
+            Search: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        };
 
-<div id="stage">
-  <div id="lw"><img id="li" src="./ReActive_Logo_Text.webp" alt="ReActive"></div>
+        const Terminal = () => {
+            // VIEW STATE: 'LISTED' active
+            const [viewMode, setViewMode] = useState('LISTED');
 
-  <div id="rail">
-    <div class="it">
-      <span class="rl">Target</span>
-      <span class="r1">Quorum</span>
-      <span class="r2">Northgate</span>
-    </div>
-    <div class="it">
-      <span class="rl">Format</span>
-      <span class="r1">Self-guided</span>
-      <span class="r2">Forensic walkthrough</span>
-    </div>
-    <div class="it">
-      <span class="rl">Runtime</span>
-      <span class="r1">~4</span>
-      <span class="r2">Minutes</span>
-    </div>
-    <div class="it">
-      <span class="rl">Engine</span>
-      <span class="r1">Deterministic</span>
-      <span class="r2">V1</span>
-    </div>
-    <div class="it">
-      <span class="rl">Positioning</span>
-      <span class="r1">Structural coherence engine</span>
-      <span class="r2">for institutional real estate.</span>
-    </div>
-    <div class="it">
-      <span class="rl">Build</span>
-      <span class="r1">2026</span>
-      <span class="r2">ReActive</span>
-    </div>
-  </div>
-</div>
+            // DATA: 30 Listed REITs. URW.AS First (Target).
+            const [funds, setFunds] = useState([
+                { ticker: "URW.AS", name: "Unibail-Rodamco-Westfield", region: "EU", aum: "€22.4B", navDisc: 53.86, momentum: -18.4, score: 82, signal: "TARGET" },
+                { ticker: "HMSO.L", name: "Hammerson", region: "UK", aum: "€6.3B", navDisc: 68.50, momentum: -12.1, score: 92, signal: "-" },
+                { ticker: "BLND.L", name: "British Land", region: "UK", aum: "€5.8B", navDisc: 45.19, momentum: -8.5, score: 74, signal: "-" },
+                { ticker: "LAND.L", name: "Land Securities", region: "UK", aum: "€6.9B", navDisc: 42.15, momentum: -6.2, score: 68, signal: "-" },
+                { ticker: "SGRO.L", name: "SEGRO", region: "UK", aum: "€10.2B", navDisc: -15.48, momentum: 12.5, score: 15, signal: "-" },
+                { ticker: "GEC.PA", name: "Gecina", region: "FR", aum: "€11.5B", navDisc: -5.09, momentum: 8.4, score: 22, signal: "-" },
+                { ticker: "ICAD.PA", name: "Icade", region: "FR", aum: "€6.1B", navDisc: 22.57, momentum: 1.2, score: 45, signal: "-" },
+                { ticker: "LI.PA", name: "Klépierre", region: "FR", aum: "€9.8B", navDisc: 35.61, momentum: -5.4, score: 65, signal: "-" },
+                { ticker: "COV.PA", name: "Covivio", region: "FR", aum: "€8.4B", navDisc: 18.32, momentum: 3.1, score: 38, signal: "-" },
+                { ticker: "VNA.DE", name: "Vonovia", region: "DE", aum: "€26.5B", navDisc: -8.34, momentum: 9.2, score: 18, signal: "-" },
+                { ticker: "LEG.DE", name: "LEG Immobilien", region: "DE", aum: "€7.2B", navDisc: -2.14, momentum: 14.5, score: 20, signal: "-" },
+                { ticker: "DWNI.DE", name: "Deutsche Wohnen", region: "DE", aum: "€13.4B", navDisc: 12.79, momentum: -4.2, score: 55, signal: "-" },
+                { ticker: "ATI.DE", name: "Aroundtown", region: "DE", aum: "€8.9B", navDisc: 5.55, momentum: 6.8, score: 32, signal: "-" },
+                { ticker: "TEG.DE", name: "TAG Immobilien", region: "DE", aum: "€3.1B", navDisc: 2.37, momentum: 8.1, score: 28, signal: "-" },
+                { ticker: "GYC.DE", name: "Grand City Properties", region: "DE", aum: "€3.5B", navDisc: 8.94, momentum: 5.3, score: 35, signal: "-" },
+                { ticker: "CAST.ST", name: "Castellum AB", region: "SE", aum: "€6.8B", navDisc: -12.60, momentum: 15.2, score: 14, signal: "-" },
+                { ticker: "BALD.ST", name: "Balder", region: "SE", aum: "€5.9B", navDisc: -8.18, momentum: 18.4, score: 16, signal: "-" },
+                { ticker: "FABG.ST", name: "Fabege", region: "SE", aum: "€4.2B", navDisc: -6.40, momentum: 11.7, score: 19, signal: "-" },
+                { ticker: "KOJMO.HE", name: "Kojamo", region: "FI", aum: "€4.1B", navDisc: -9.85, momentum: 18.1, score: 21, signal: "-" },
+                { ticker: "CITYC.HE", name: "Citycon", region: "FI", aum: "€1.6B", navDisc: 38.40, momentum: -7.6, score: 62, signal: "-" },
+                { ticker: "WDP.BR", name: "Warehouses De Pauw", region: "BE", aum: "€5.3B", navDisc: -3.20, momentum: 9.8, score: 25, signal: "-" },
+                { ticker: "COFI.BR", name: "Cofinimmo", region: "BE", aum: "€4.8B", navDisc: 15.70, momentum: 2.4, score: 42, signal: "-" },
+                { ticker: "ATRL.AS", name: "Atrium European Real Estate", region: "NL", aum: "€2.1B", navDisc: 45.20, momentum: -11.3, score: 71, signal: "-" },
+                { ticker: "NSI.AS", name: "NSI N.V.", region: "NL", aum: "€1.3B", navDisc: 28.50, momentum: -3.8, score: 58, signal: "-" },
+                { ticker: "PSHN.AS", name: "Retail Estates", region: "BE", aum: "€1.1B", navDisc: 12.30, momentum: 4.5, score: 48, signal: "-" },
+                { ticker: "MER.PA", name: "Mercialys", region: "FR", aum: "€2.2B", navDisc: 42.80, momentum: -9.2, score: 69, signal: "-" },
+                { ticker: "ALXRE.PA", name: "Altarea", region: "FR", aum: "€3.9B", navDisc: 35.20, momentum: -6.8, score: 66, signal: "-" },
+                { ticker: "SFER.PA", name: "Société Foncière Lyonnaise", region: "FR", aum: "€4.2B", navDisc: 28.90, momentum: -2.1, score: 52, signal: "-" },
+                { ticker: "IML.L", name: "Intu Properties", region: "UK", aum: "€0.9B", navDisc: 82.30, momentum: -22.8, score: 95, signal: "-" },
+                { ticker: "CREI.L", name: "Capital & Regional", region: "UK", aum: "€0.4B", navDisc: 71.50, momentum: -18.5, score: 88, signal: "-" }
+            ]);
 
-<script>
-  function tick() { document.getElementById('st').textContent = new Date().toUTCString().split(' ')[4] + ' UTC'; }
-  setInterval(tick, 1000); tick();
-  function align() { const r = document.getElementById('mv').getBoundingClientRect(); document.getElementById('btn').style.right = (window.innerWidth - r.right) + 'px'; }
-  window.addEventListener('load', align);
-  window.addEventListener('resize', align);
-</script>
+            // INTELLIGENCE FEED: Live Intelligence
+            const feedItems = [
+                { time: "14:58:12", ticker: "URW.AS", msg: "NAV anomaly detected" },
+                { time: "14:57:22", ticker: "HMSO.L", msg: "Governance risk flag" },
+                { time: "14:56:45", ticker: "DWNI.DE", msg: "Debt maturity wall <18m" },
+                { time: "14:55:33", ticker: "LAND.L", msg: "Valuation mismatch vs peer group" },
+                { time: "14:54:18", ticker: "VNA.DE", msg: "Activist accumulation suspected" },
+                { time: "14:53:12", ticker: "URW.AS", msg: "Capital structure review flagged" },
+                { time: "14:52:02", ticker: "BLND.L", msg: "Portfolio concentration risk" },
+                { time: "14:51:28", ticker: "SEGRO.L", msg: "Market positioning shift" },
+                { time: "14:50:15", ticker: "GEC.PA", msg: "ESG compliance update" },
+                { time: "14:49:08", ticker: "ICAD.PA", msg: "Asset rotation detected" },
+                { time: "14:48:22", ticker: "LI.PA", msg: "Distribution policy change" },
+                { time: "14:47:15", ticker: "COV.PA", msg: "Refinancing activity detected" }
+            ];
+
+            // Subtle animation for numbers to feel alive
+            useEffect(() => {
+                const t = setInterval(() => {
+                    setFunds(prev => prev.map(f => ({
+                        ...f,
+                        // Micro-fluctuations for "alive" data feel
+                        navDisc: f.navDisc + (Math.random() - 0.5) * 0.02,
+                        momentum: f.momentum + (Math.random() - 0.5) * 0.01
+                    })));
+                }, 2000);
+                return () => clearInterval(t);
+            }, []);
+
+            const handleRowClick = (ticker) => {
+                if (ticker === "URW.AS") window.location.href = "../05-urw-deep-dive/index.html";
+            };
+
+            // HELPER: Color Logic for NAV Disc
+            const getNavColor = (val) => {
+                if (val > 30) return 'text-red-600';
+                if (val < 10) return 'text-green-700';
+                return 'text-[#111111]';
+            };
+
+            return (
+                <div className="flex w-full h-full bg-white">
+                    
+                    {/* LEFT SIDEBAR - INTELLIGENCE MODES */}
+                    <div className="w-16 bg-[#f2f2f2] border-r border-[#e0e0e0] flex flex-col items-center py-6 z-30 flex-shrink-0">
+                        {/* LOGO - Returns to Terminal */}
+                        <div className="w-10 h-10 rounded overflow-hidden mb-6 cursor-pointer hover:opacity-80 transition-opacity"
+                             onClick={() => window.location.href = 'index.html'}>
+                            <img src="assets/logos/reactive_logo_text.webp" className="w-full h-full object-contain" alt="ReActive" />
+                        </div>
+                        
+                        {/* Divider */}
+                        <div className="w-8 h-px bg-[#d0d0d0] mb-6"></div>
+                        
+                        {/* PRIMARY MODES */}
+                        <div className="flex flex-col gap-6 mb-auto">
+                            {/* Terminal - ACTIVE */}
+                            <div className="relative group cursor-pointer" title="Terminal">
+                                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[#d4773a] transition-colors"></div>
+                                <div className="text-[#d4773a] transition-colors pl-4">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <rect x="3" y="3" width="7" height="7"></rect>
+                                        <rect x="14" y="3" width="7" height="7"></rect>
+                                        <rect x="14" y="14" width="7" height="7"></rect>
+                                        <rect x="3" y="14" width="7" height="7"></rect>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            {/* Asset Deep Dive - Disabled at terminal level */}
+                            <div className="relative group" title="Asset Deep Dive">
+                                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[#d0d0d0] transition-colors"></div>
+                                <div className="text-[#aaaaaa] transition-colors pl-4 opacity-30">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            {/* Data Room - Disabled at terminal level */}
+                            <div className="relative group" title="Data Room">
+                                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[#d0d0d0] transition-colors"></div>
+                                <div className="text-[#aaaaaa] transition-colors pl-4 opacity-30">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            {/* Scan - Disabled at terminal level */}
+                            <div className="relative group" title="Scan">
+                                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[#d0d0d0] transition-colors"></div>
+                                <div className="text-[#aaaaaa] transition-colors pl-4 opacity-30">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M2 12h4"></path>
+                                        <path d="M18 12h4"></path>
+                                        <circle cx="12" cy="12" r="8"></circle>
+                                        <path d="M12 8v8"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            {/* Findings - Disabled at terminal level */}
+                            <div className="relative group" title="Findings">
+                                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[#d0d0d0] transition-colors"></div>
+                                <div className="text-[#aaaaaa] transition-colors pl-4 opacity-30">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Divider */}
+                        <div className="w-8 h-px bg-[#d0d0d0] mb-6"></div>
+                        
+                        {/* SYSTEM STATUS (Bottom) */}
+                        <div className="flex flex-col gap-4 opacity-40">
+                            {/* System State */}
+                            <div className="text-[#777777] text-xs" title="System: Active">
+                                <div className="w-2 h-2 rounded-full bg-green-500 mx-auto"></div>
+                            </div>
+                            {/* Session Mode */}
+                            <div className="text-[#777777] text-[10px] font-mono" title="Mode: Demo">
+                                <div className="w-2 h-2 rounded-full bg-orange-500 mx-auto"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 2. MAIN CONTENT */}
+                    <div className="flex-1 flex flex-col min-w-0">
+                        
+                        {/* 2A. TOP HEADER (Telemetry) */}
+                        <div className="h-8 bg-white border-b border-[#e0e0e0] flex items-center justify-between px-4 text-[10px] font-mono text-[#999999] select-none">
+                            <div className="flex gap-6">
+                                <span>SYSTEM: <span className="text-green-700">ONLINE</span></span>
+                                <span>COVERAGE: <span className="text-[#111111]">EUROPEAN REAL ESTATE</span></span>
+                                <span>NLP ENGINE: <span className="text-[#d4773a]">ACTIVE</span></span>
+                                <span>DOCS PARSED: 1,527</span>
+                            </div>
+                            <div className="flex gap-6">
+                                <span>LATENCY: 4ms</span>
+                                <span>MEM: 2.1GB</span>
+                                <span className="text-[#d4773a] font-bold">MODE: FORENSIC ANALYSIS | LISTED</span>
+                            </div>
+                        </div>
+
+                        {/* 2B. COVERAGE BAR (UNIFIED) */}
+                        <div className="h-14 bg-[#f5f5f5] border-b border-[#e0e0e0] flex items-center justify-between px-6">
+                            <div className="flex items-center gap-6">
+                                <div className="flex items-center gap-2 text-[#111111] font-bold text-lg">
+                                    <Icons.Grid /> 
+                                    {/* UNIFIED LABEL */}
+                                    Coverage
+                                </div>
+                                <div className="flex gap-4">
+                                    {/* TOGGLE GROUP - NOW WITH NAVIGATION LINKS */}
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => window.location.href = "../04-terminal-scanner/index.html"}
+                                            className={`${viewMode === 'LISTED' ? 'bg-orange-50 text-[#d4773a] border-[#d4773a]' : 'text-[#999999] border-[#d0d0d0] hover:text-[#111111] hover:border-[#cccccc]'} border px-3 py-1 rounded text-xs font-bold transition-colors flex items-center gap-2`}
+                                        >
+                                            LISTED
+                                        </button>
+                                        <button 
+                                            onClick={() => window.location.href = "../20-private-fund/index.html"}
+                                            className={`${viewMode === 'PRIVATE' ? 'bg-orange-50 text-[#d4773a] border-[#d4773a]' : 'text-[#999999] border-[#d0d0d0] hover:text-[#111111] hover:border-[#cccccc]'} border px-3 py-1 rounded text-xs font-bold transition-colors flex items-center gap-2`}
+                                        >
+                                            PRIVATE
+                                        </button>
+                                    </div>
+                                    
+                                    {/* Spacer */}
+                                    <div className="w-px h-6 bg-[#e0e0e0] self-center"></div>
+
+                                    <div className="flex gap-1 items-center">
+                                        <button className="bg-orange-900/20 text-[#d4773a] border border-[#d4773a]/50 px-3 py-1 rounded text-xs font-bold flex items-center gap-2"><Icons.Search /> DETECT</button>
+                                        <button className="text-[#999999] hover:text-[#111111] px-3 py-1 rounded text-xs font-bold">DIAGNOSE</button>
+                                        <button className="text-[#999999] hover:text-[#111111] px-3 py-1 rounded text-xs font-bold">RECAP</button>
+                                        <button className="text-[#999999] hover:text-[#111111] px-3 py-1 rounded text-xs font-bold">EXECUTE</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Disabled Filters (Consistent with PE) */}
+                            <button className="flex items-center gap-2 border border-[#d0d0d0] bg-[#eeeeee] px-3 py-1.5 rounded text-xs text-[#999999] opacity-30 cursor-not-allowed">
+                                <Icons.Filter /> Filters
+                            </button>
+                        </div>
+
+                        {/* 2C. MAIN WORKSPACE (Table + Feed) */}
+                        <div className="flex-1 flex overflow-hidden">
+                            
+                            {/* TABLE */}
+                            <div className="flex-1 flex flex-col bg-white overflow-hidden">
+                                <div className="flex-1 overflow-auto">
+                                    <table className="w-full text-left border-collapse text-xs">
+                                        <thead className="bg-white text-[#888888] uppercase font-semibold sticky top-0 z-10 border-b border-[#e0e0e0]">
+                                            <tr>
+                                                <th className="p-3 pl-6">Ticker</th>
+                                                <th className="p-3">Fund Name</th>
+                                                <th className="p-3">Region</th>
+                                                <th className="p-3">AUM</th>
+                                                <th className="p-3 text-right">NAV Disc.</th>
+                                                <th className="p-3 text-right">Momentum</th>
+                                                <th className="p-3 text-right">Score</th>
+                                                <th className="p-3 text-center">Signal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="font-mono divide-y divide-[#ebebeb]">
+                                            {funds.map((f, i) => (
+                                                <tr 
+                                                    key={i} 
+                                                    onClick={() => handleRowClick(f.ticker)} 
+                                                    className={`hover:bg-[#e2e2e2] cursor-pointer transition-colors`}
+                                                >
+                                                    <td className={`p-3 pl-6 font-bold text-[#1d6bb5]`}>{f.ticker}</td>
+                                                    <td className="p-3 text-[#333333] font-sans">{f.name}</td>
+                                                    <td className="p-3 text-[#999999]">{f.region}</td>
+                                                    <td className="p-3 text-[#111111]">{f.aum}</td>
+                                                    
+                                                    {/* Color Logic for NAV Disc */}
+                                                    <td className={`p-3 text-right font-bold ${getNavColor(f.navDisc)}`}>
+                                                        {f.navDisc.toFixed(2)}%
+                                                    </td>
+                                                    
+                                                    {/* Color Logic for Momentum */}
+                                                    <td className={`p-3 text-right ${f.momentum > 0 ? 'text-green-700' : 'text-red-600'}`}>
+                                                        {f.momentum > 0 ? '+' : ''}{f.momentum.toFixed(1)}%
+                                                    </td>
+                                                    
+                                                    <td className="p-3 text-right font-bold text-[#111111]">{f.score}</td>
+                                                    <td className="p-3 text-center">
+                                                        <span className="text-[#aaaaaa]">-</span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {/* NO FOOTER - CLEAN BOTTOM */}
+                            </div>
+
+                            {/* RIGHT PANEL (LIVE INTELLIGENCE) - Full Height */}
+                            <div className="w-80 bg-[#f5f5f5] border-l border-[#e0e0e0] flex flex-col flex-shrink-0">
+                                <div className="h-10 flex items-center gap-2 px-4 border-b border-[#e0e0e0] text-[10px] font-bold text-[#111111] bg-[#eeeeee]">
+                                    <div className="w-2 h-2 rounded-full bg-red-500 live-dot"></div> LIVE INTELLIGENCE
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                                    {feedItems.map((item, i) => (
+                                        <div key={i} className={`p-3 border-b border-[#e8e8e8] hover:bg-[#e2e2e2] ${item.ticker === 'URW.AS' ? 'bg-orange-900/5' : ''}`}>
+                                            <div className="flex justify-between text-[10px] mb-1">
+                                                <span className="text-[#999999] font-mono">{item.time}</span>
+                                                <span className={`${item.ticker === 'URW.AS' ? 'text-[#d4773a]' : 'text-[#888888]'} font-bold`}>{item.ticker}</span>
+                                            </div>
+                                            <div className="text-[11px] text-[#555555] leading-tight">{item.msg}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Terminal />);
+    </script>
 </body>
 </html>
