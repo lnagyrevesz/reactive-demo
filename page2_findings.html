@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ReActive — Coherence Testing</title>
+<style>
+  /* Page-2 ONLY illustrative scan surface — TEMPLATE for the real later scan page.
+     Shown in END-OF-SCAN (completed) state, never running.
+     Figures invented & distinct from any real locked value. Public terms only
+     (Finding, Coherence Testing). No FO/Forensic Object, no identifier/hash,
+     no NorthGate/Quorum naming, no six-stage pipeline diagram. */
+  :root {
+    --bg-core:#050505; --bg-panel:#0a0a0a; --bg-rail:#070707; --bg-head:#0d0d0d;
+    --bg-block:#101214; --bg-chip:#131517;
+    --border:#262626; --border-soft:#191919;
+    --txt-key:#e9ebec; --txt-main:#c7cacc; --txt-meta:#8a8f93; --txt-mute:#6a6f73; --txt-dim:#4c5256;
+    --nav:#5bbccf; --nav-dim:#356c79; --accent:#d4773a; --accent-br:#fb923c; --accent-tint:rgba(251,146,60,0.10);
+    --ok:#5a9e7a;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { width:100%; height:100%; overflow:hidden; background:var(--bg-core); color:var(--txt-main); font-family:var(--mono); font-size:12px; -webkit-font-smoothing:antialiased; }
+  body { display:flex; }
+
+  /* rail (shared chrome) */
+  .rail { flex:0 0 188px; background:var(--bg-rail); border-right:1px solid var(--border); display:flex; flex-direction:column; }
+  .rail-brand { height:48px; display:flex; align-items:center; padding:0 14px; border-bottom:1px solid var(--border); font-family:var(--sans); font-weight:700; font-size:15px; letter-spacing:.3px; color:var(--txt-key); }
+  .rail-brand .s { color:var(--accent-br); }
+  .rail-section { padding:14px 14px 6px; font-family:var(--sans); font-size:9.5px; letter-spacing:1.6px; text-transform:uppercase; color:var(--txt-dim); }
+  .mod { display:flex; align-items:center; gap:9px; padding:8px 14px; font-family:var(--sans); font-size:12px; color:var(--txt-mute); border-left:2px solid transparent; }
+  .mod .g { font-family:var(--mono); font-size:11px; color:var(--txt-dim); width:14px; text-align:center; }
+  .mod.active { color:var(--txt-key); border-left-color:var(--accent-br); background:linear-gradient(90deg, var(--accent-tint), transparent 70%); }
+  .mod.active .g { color:var(--accent-br); }
+  .rail-foot { margin-top:auto; border-top:1px solid var(--border); padding:12px 14px; font-size:10px; line-height:1.7; color:var(--txt-dim); }
+  .rail-foot b { color:var(--txt-meta); font-weight:600; }
+
+  /* main */
+  .main { flex:1 1 auto; display:flex; flex-direction:column; min-width:0; }
+  .topbar { height:48px; flex:0 0 48px; background:var(--bg-head); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; padding:0 16px; }
+  .crumb { font-size:11px; letter-spacing:1.1px; text-transform:uppercase; color:var(--txt-meta); }
+  .crumb b { color:var(--txt-key); font-weight:600; }
+  .crumb .sep { color:var(--txt-dim); margin:0 8px; }
+  .tb-stats { margin-left:auto; display:flex; align-items:center; gap:0; }
+  .tb { padding:0 14px; border-left:1px solid var(--border-soft); font-size:10px; letter-spacing:.6px; text-transform:uppercase; color:var(--txt-dim); white-space:nowrap; }
+  .tb b { color:var(--txt-meta); font-weight:500; }
+  .tb .ok { color:var(--accent-br); }
+  .tb .dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent-br); box-shadow:0 0 6px var(--accent-br); margin-right:6px; vertical-align:middle; }
+
+  /* even split */
+  .body { flex:1 1 auto; display:grid; grid-template-columns:1fr 1fr; min-height:0; }
+  .pane { overflow:auto; }
+  .pane.process { border-right:1px solid var(--border); }
+
+  /* PROCESS column */
+  .head { padding:18px 22px 14px; }
+  .head h1 { font-family:var(--sans); font-size:clamp(15px,1.5vw,19px); font-weight:600; letter-spacing:-.01em; color:var(--txt-key); margin-bottom:6px; }
+  .head .desc { font-size:11.5px; color:var(--txt-mute); line-height:1.5; max-width:60ch; }
+
+  .block { margin:0 22px 18px; background:var(--bg-block); border:1px solid var(--border-soft); padding:14px 16px; }
+  .block .lbl { font-family:var(--sans); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--txt-dim); margin-bottom:9px; }
+  .loadbar { height:8px; background:#1b1e21; display:flex; gap:2px; padding:0; margin-bottom:12px; }
+  .loadbar i { flex:1; background:var(--accent); }
+  .loadbar i:last-child { background:var(--accent-br); }
+  .load-n { font-size:21px; color:var(--txt-key); font-variant-numeric:tabular-nums; }
+  .load-n span { font-size:11px; color:var(--txt-mute); letter-spacing:.3px; }
+  .rstate { margin-top:11px; }
+  .rstate .lbl2 { font-family:var(--sans); font-size:9px; letter-spacing:1.4px; text-transform:uppercase; color:var(--txt-dim); margin-bottom:4px; }
+  .rstate .v { font-size:12px; color:var(--txt-main); }
+  .rstate .v .ok { color:var(--accent-br); }
+
+  .section-lbl { padding:0 22px; font-family:var(--sans); font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--txt-dim); margin-bottom:10px; }
+  .focus { padding:0 22px; margin-bottom:20px; }
+  .fitem { display:flex; gap:11px; padding:11px 0; border-bottom:1px solid var(--border-soft); }
+  .fitem .ck { flex:0 0 auto; color:var(--ok); font-size:12px; margin-top:1px; }
+  .fitem .ft { font-size:12.5px; color:var(--txt-main); margin-bottom:3px; }
+  .fitem .fd { font-size:11px; color:var(--txt-dim); line-height:1.5; }
+  .fitem.surfaced .ck { color:var(--accent-br); }
+  .fitem.surfaced .ft { color:var(--txt-key); }
+
+  .log { margin:0 22px 22px; background:#08090a; border:1px solid var(--border-soft); padding:13px 15px; }
+  .log .lbl { font-family:var(--sans); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--txt-dim); margin-bottom:10px; }
+  .logline { font-family:var(--mono); font-size:10.5px; line-height:1.85; color:var(--txt-mute); white-space:nowrap; }
+  .logline .t { color:var(--txt-dim); margin-right:12px; }
+  .logline.hit { color:var(--accent-br); }
+  .logline.done { color:var(--txt-main); }
+  .logline.complete { color:var(--accent-br); font-weight:600; }
+
+  /* EVIDENCE LOCKER column */
+  .locker-head { display:flex; align-items:center; padding:18px 22px 14px; }
+  .locker-head h2 { font-family:var(--sans); font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--txt-mute); }
+  .locker-head .badge { margin-left:auto; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--accent-br); border:1px solid var(--accent-br); padding:3px 9px; border-radius:2px; }
+
+  .finding { margin:0 22px 16px; border:1px solid var(--accent-dim, #5a3a20); border:1px solid rgba(212,119,58,.45); background:var(--bg-panel); }
+  .finding .fhead { display:flex; align-items:center; gap:9px; padding:14px 16px 0; flex-wrap:wrap; }
+  .ftag { font-size:8.5px; letter-spacing:1px; text-transform:uppercase; padding:3px 8px; border-radius:2px; }
+  .ftag.cat { color:var(--accent-br); border:1px solid var(--accent-br); }
+  .ftag.kind { color:var(--txt-mute); border:1px solid var(--border); }
+  .fblock { margin:14px 16px 0; background:var(--bg-block); border:1px solid var(--border-soft); padding:12px 14px; }
+  .fblock .bl { font-family:var(--sans); font-size:8.5px; letter-spacing:1.3px; text-transform:uppercase; color:var(--txt-dim); margin-bottom:7px; }
+  .fblock .bv { font-size:14px; color:var(--txt-key); font-variant-numeric:tabular-nums; }
+  .fblock .bv .u { font-size:11px; color:var(--txt-mute); }
+  .fblock .bsub { font-size:10.5px; color:var(--txt-mute); margin-top:5px; font-style:italic; }
+  .farrow { text-align:center; color:var(--txt-dim); font-size:14px; padding:7px 0; }
+  .fblock.reality .bv { color:var(--txt-key); }
+  .fdelta { display:flex; align-items:baseline; gap:10px; margin-top:9px; }
+  .fdelta .dl { font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--txt-dim); }
+  .fdelta .dv { font-family:var(--mono); font-size:22px; font-weight:700; color:var(--accent-br); font-variant-numeric:tabular-nums; }
+  .involved { margin:14px 16px 0; }
+  .involved .bl { font-family:var(--sans); font-size:8.5px; letter-spacing:1.3px; text-transform:uppercase; color:var(--txt-dim); margin-bottom:8px; }
+  .doc { display:flex; align-items:center; gap:8px; padding:5px 0; font-family:var(--mono); font-size:10px; color:var(--txt-meta); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ftype { flex:0 0 auto; font-family:var(--sans); font-size:7.5px; font-weight:700; letter-spacing:.5px; color:#fff; padding:2px 4px; border-radius:2px; }
+  .ftype.pdf { background:#b5443a; }
+  .ftype.xls { background:#3f8f5e; }
+  .fbtn { display:block; width:calc(100% - 32px); margin:14px 16px 16px; text-align:center; font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--txt-main); background:rgba(212,119,58,.14); border:1px solid rgba(212,119,58,.5); padding:10px; cursor:default; }
+  .locker-note { padding:4px 22px; font-size:10.5px; color:var(--txt-dim); }
+  .viewall { display:block; margin:14px 22px 22px; text-align:center; font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--txt-key); background:var(--accent); border:1px solid var(--accent); padding:12px; cursor:default; }
+
+  @media (max-width:820px){ .rail{ display:none; } .body{ grid-template-columns:1fr; } .pane.process{ border-right:none; border-bottom:1px solid var(--border); } .tb-stats{ display:none; } }
+</style>
+</head>
+<body>
+
+  <nav class="rail">
+    <div class="rail-brand">Re<span class="s">/</span>Active</div>
+    <div class="rail-section">Workstation</div>
+    <div class="mod"><span class="g">&#9635;</span>Coverage</div>
+    <div class="mod"><span class="g">&#9707;</span>Profile</div>
+    <div class="mod active"><span class="g">&#9672;</span>Scan</div>
+    <div class="mod"><span class="g">&#9636;</span>Report</div>
+    <div class="rail-foot">
+      <div><b>METHOD</b> &nbsp; Coherence Testing</div>
+      <div><b>MODE</b> &nbsp; Detection-only</div>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="crumb">Scan <span class="sep">/</span> <b>Coherence Testing</b></div>
+      <div class="tb-stats">
+        <span class="tb"><b>Target</b> Briarstone Property Fund</span>
+        <span class="tb"><b>Engine</b> <span class="ok">Complete</span></span>
+        <span class="tb"><b>Artefacts</b> 6 240</span>
+        <span class="tb"><span class="dot"></span>Mode Structural analysis</span>
+      </div>
+    </div>
+
+    <div class="body">
+
+      <!-- ================= PROCESS ================= -->
+      <div class="pane process">
+        <div class="head">
+          <h1>Coherence Scan — Briarstone Property Fund</h1>
+          <div class="desc">This scan surfaces documented structural inconsistencies across the analyzed documentation.</div>
+        </div>
+
+        <div class="block">
+          <div class="lbl">Analytical load</div>
+          <div class="loadbar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="load-n">6 240 <span>source artefacts analyzed</span></div>
+          <div class="rstate">
+            <div class="lbl2">Analysis state</div>
+            <div class="v">Cross-layer consistency testing <span class="ok">complete</span></div>
+          </div>
+        </div>
+
+        <div class="section-lbl">Analytical focus</div>
+        <div class="focus">
+          <div class="fitem"><span class="ck">&#10003;</span><div><div class="ft">Ingesting and classifying source documents</div><div class="fd">Every document classified by type, deduplicated, and converted to a common machine-readable form.</div></div></div>
+          <div class="fitem"><span class="ck">&#10003;</span><div><div class="ft">Extracting facts under a fixed schema</div><div class="fd">Facts read from each document under a fixed schema, with the source of every value recorded.</div></div></div>
+          <div class="fitem"><span class="ck">&#10003;</span><div><div class="ft">Reconstructing declared structures</div><div class="fd">Entity timelines, ownership layers, contractual commitments, and financial models aligned.</div></div></div>
+          <div class="fitem"><span class="ck">&#10003;</span><div><div class="ft">Testing reconstructed structures for contradiction</div><div class="fd">Deterministic checks for whether the reconstructed structures can all hold at once, with contradictions surfaced.</div></div></div>
+          <div class="fitem"><span class="ck">&#10003;</span><div><div class="ft">Quantifying the reported-vs-reconstructed delta</div><div class="fd">Differences between independently reconstructed values and reported summary figures, quantified under explicit assumptions.</div></div></div>
+          <div class="fitem"><span class="ck">&#10003;</span><div><div class="ft">Tracing each finding to its source documents</div><div class="fd">Each finding carried back to specific clauses in specific documents as a complete evidence chain.</div></div></div>
+        </div>
+
+        <div class="log">
+          <div class="lbl">System audit log</div>
+          <div class="logline"><span class="t">12:31:48</span>Initializing coherence engine</div>
+          <div class="logline"><span class="t">12:31:48</span>Mounting dataroom</div>
+          <div class="logline"><span class="t">12:31:49</span>Activating analysis modules</div>
+          <div class="logline"><span class="t">12:32:04</span>Cross-layer consistency tests run</div>
+          <div class="logline"><span class="t">12:32:08</span>Delta computation complete</div>
+          <div class="logline done"><span class="t">12:32:11</span>Finding detected &mdash; reported vs reconstructed NAV</div>
+          <div class="logline complete"><span class="t">12:53:12</span>Analysis complete &mdash; findings compiled</div>
+        </div>
+      </div>
+
+      <!-- ================= EVIDENCE LOCKER ================= -->
+      <div class="pane locker">
+        <div class="locker-head"><h2>Evidence Locker</h2><span class="badge">1 Finding</span></div>
+
+        <div class="finding">
+          <div class="fhead">
+            <span class="ftag kind">Documented variance</span>
+            <span class="ftag cat">Structural delta</span>
+          </div>
+
+          <div class="fblock assumption">
+            <div class="bl">Declared (reported)</div>
+            <div class="bv">Reported NAV &euro;312.4M</div>
+            <div class="bsub">Stabilized asset treatment under prevailing market conditions</div>
+          </div>
+
+          <div class="farrow">&#8595;</div>
+
+          <div class="fblock reality">
+            <div class="bl">Reconstructed (evidenced)</div>
+            <div class="bv">Reconstructed NAV &euro;198.6M</div>
+            <div class="fdelta"><span class="dl">Delta</span><span class="dv">&minus;36.4%</span></div>
+          </div>
+
+          <div class="involved">
+            <div class="bl">Involved documents</div>
+            <div class="doc"><span class="ftype pdf">PDF</span>Briarstone_Q4_Valuation_Report.pdf</div>
+            <div class="doc"><span class="ftype xls">XLS</span>Briarstone_Operating_Model_v12.xlsx</div>
+            <div class="doc"><span class="ftype pdf">PDF</span>Briarstone_Facility_Agreement.pdf</div>
+          </div>
+
+          <div class="fbtn">Open evidence chain</div>
+        </div>
+
+        <div class="locker-note">All remaining checks returned consistent.</div>
+        <div class="viewall">View structural finding</div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
