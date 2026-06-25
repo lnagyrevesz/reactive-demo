@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ReActive — Coherence Testing</title>
+<style>
+  /* Page-2 ILLUSTRATIVE scan surface, re-skinned in the Page-4 workstation grammar so the
+     two Scan pages share one design language. Content is illustrative and distinct from any
+     real locked value. Public terms only (Finding, Coherence Testing). No FO/Forensic Object,
+     no identifier/hash, no NorthGate/Quorum naming, no six-stage pipeline strip. */
+  :root {
+    --bg:#050505; --panel:#0a0a0a; --panel2:#0e0e0e; --panel3:#0c0c0c;
+    --border:#262626; --border2:#1a1a1a; --border3:#141414;
+    --txt-main:#e8e8e8; --txt-mute:#9a9a9a; --txt-meta:#7a7a7a; --txt-dim:#565656; --txt-faint:#3e3e3e;
+    --accent:#d4773a; --accent-br:#fb923c; --cyan:#5bbccf; --cyan-dim:#3c6e78; --green:#5e9e6f;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { height:100%; }
+  body { background:var(--bg); color:var(--txt-main); font-family:var(--sans); -webkit-font-smoothing:antialiased; height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+
+  /* system bar */
+  .sysbar { display:flex; align-items:center; gap:0; height:30px; flex:0 0 auto; border-bottom:1px solid var(--border); background:#000; font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; }
+  .sysbar .cell { padding:0 14px; height:100%; display:flex; align-items:center; gap:7px; border-right:1px solid var(--border3); color:var(--txt-dim); }
+  .sysbar .cell .k { color:var(--txt-faint); }
+  .sysbar .cell .v { color:var(--txt-mute); }
+  .sysbar .grow { flex:1; border-right:0; }
+  .sysbar .clock { color:var(--txt-meta); }
+  .sysbar .brandcell { padding:0 14px; }
+  .sysbar .brandcell img { height:15px; display:block; }
+  .sysbar .brandcell .bwm { display:none; font-weight:700; color:var(--txt-mute); letter-spacing:.04em; }
+  .sysbar .brandcell .bwm b { color:var(--accent-br); font-weight:700; }
+  .sysbar .brandcell.fallback img { display:none; }
+  .sysbar .brandcell.fallback .bwm { display:inline; }
+
+  .body { flex:1 1 auto; display:flex; min-height:0; }
+
+  /* global persistent rail */
+  .grail { flex:0 0 46px; border-right:1px solid var(--border); background:#070707; display:flex; flex-direction:column; align-items:center; padding:12px 0; }
+  .grail .mark { font-family:var(--mono); font-weight:700; font-size:14px; color:var(--accent-br); margin-bottom:22px; }
+  .grail .ticks { display:flex; flex-direction:column; gap:14px; align-items:center; flex:1; }
+  .grail .tick { font-family:var(--mono); font-size:9px; color:var(--txt-faint); writing-mode:vertical-rl; letter-spacing:.15em; }
+  .grail .tick.on { color:var(--cyan); }
+  .grail .stat { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .grail .stat .led { width:6px; height:6px; border-radius:50%; background:var(--green); }
+  .grail .stat .lbl { font-family:var(--mono); font-size:8px; color:var(--txt-dim); writing-mode:vertical-rl; letter-spacing:.1em; }
+
+  /* main scroll region: header + columns */
+  .stage { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
+  .hdr { flex:0 0 auto; padding:18px 24px 12px; border-bottom:1px solid var(--border2); }
+  .framing { font-size:16px; font-weight:600; color:var(--txt-main); letter-spacing:-.1px; }
+  .framing .dim { color:var(--txt-meta); font-weight:400; }
+  .subproc { font-family:var(--mono); font-size:10px; color:var(--txt-dim); letter-spacing:.04em; margin-top:7px; }
+  .cap { font-family:var(--mono); font-size:10px; color:var(--txt-meta); letter-spacing:.04em; margin-top:11px; }
+  .cap .em { color:var(--accent); }
+
+  /* working columns */
+  .cols { flex:1 1 auto; display:flex; min-height:0; }
+  .engine { flex:0 0 248px; border-right:1px solid var(--border2); padding:16px 14px; overflow-y:auto; }
+  .center { flex:1 1 auto; min-width:0; padding:18px 22px; overflow-y:auto; }
+  .locker { flex:0 0 340px; border-left:1px solid var(--border2); padding:16px 16px; overflow-y:auto; background:#070707; }
+
+  .ch { font-family:var(--mono); font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--txt-dim); margin-bottom:12px; }
+  .ch.row { display:flex; align-items:center; justify-content:space-between; }
+
+  /* engine column: analytical focus + audit log */
+  .focusrow { display:flex; gap:8px; padding:8px 0; border-bottom:1px solid var(--border3); }
+  .focusrow:last-child { border-bottom:0; }
+  .focusrow .chk { flex:0 0 auto; color:var(--green); font-size:10px; margin-top:1px; }
+  .focusrow .ft { font-size:11px; color:var(--txt-mute); line-height:1.4; }
+  .focusrow .fd { font-family:var(--mono); font-size:9px; color:var(--txt-dim); line-height:1.5; margin-top:3px; }
+  .audit { margin-top:18px; border:1px solid var(--border3); border-radius:3px; background:#040404; padding:11px; }
+  .audit .ah { font-family:var(--mono); font-size:8.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--txt-faint); margin-bottom:8px; }
+  .ll { font-family:var(--mono); font-size:9.5px; line-height:1.95; color:var(--cyan-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ll .t { color:var(--txt-faint); margin-right:8px; }
+  .ll.done { color:var(--txt-mute); }
+  .ll.emit { color:var(--accent-br); }
+
+  /* center: surfaced exception thread */
+  .ex-head { display:flex; align-items:baseline; gap:10px; margin-bottom:4px; }
+  .ex-head .eyebrow { font-family:var(--mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--txt-meta); }
+  .ex-title { font-size:19px; font-weight:600; color:var(--txt-main); margin-bottom:18px; letter-spacing:-.2px; }
+
+  .seg { border:1px solid var(--border2); border-radius:4px; background:var(--panel); margin-bottom:10px; }
+  .seg .sk { font-family:var(--mono); font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; padding:9px 16px 0; }
+  .seg .sb { padding:8px 16px 14px; font-size:13px; line-height:1.6; color:var(--txt-mute); }
+  .seg .sb .val { font-family:var(--mono); color:var(--txt-main); }
+  .seg.claim { border-left:2px solid var(--cyan-dim); }
+  .seg.claim .sk { color:var(--cyan-dim); }
+  .seg.reality { border-left:2px solid var(--cyan); }
+  .seg.reality .sk { color:var(--cyan); }
+  .seg.concern { border-left:2px solid var(--accent); background:#0c0a06; }
+  .seg.concern .sk { color:var(--accent); }
+  .seg.concern .sb { color:#d8d2c8; }
+  .seg.concern .sb .q { color:var(--accent-br); font-family:var(--mono); font-size:18px; font-weight:700; }
+
+  /* evidence locker */
+  .badge { font-family:var(--mono); font-size:8px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent-br); border:1px solid var(--accent-br); border-radius:2px; padding:3px 8px; }
+  .docrow { border:1px solid var(--border3); border-radius:3px; background:var(--panel); padding:10px 11px; margin-bottom:8px; }
+  .docrow .role { font-family:var(--mono); font-size:8px; letter-spacing:.1em; text-transform:uppercase; color:var(--cyan-dim); margin-bottom:5px; }
+  .docrow .fname { font-family:var(--mono); font-size:9px; color:var(--txt-meta); word-break:break-all; }
+  .chainnote { font-family:var(--mono); font-size:10px; color:var(--txt-dim); margin-top:16px; padding-top:12px; border-top:1px solid var(--border3); line-height:1.5; }
+  .viewall { display:block; text-align:center; font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--txt-main); background:rgba(212,119,58,.14); border:1px solid rgba(212,119,58,.5); border-radius:3px; padding:11px; margin-top:14px; cursor:default; }
+
+  @media (max-width:1100px){ .cols{flex-direction:column;} .engine,.locker{flex:0 0 auto;border:0;border-top:1px solid var(--border2);} .body{overflow-y:auto;} body{overflow:auto;height:auto;} }
+</style>
+</head>
+<body>
+
+  <div class="sysbar">
+    <div class="cell brandcell"><img src="assets/logos/reactive_logo_text.webp" alt="ReActive" onerror="this.parentNode.classList.add('fallback')"><span class="bwm">Re<b>Active</b></span></div>
+    <div class="cell"><span class="k">TARGET</span><span class="v">Briarstone Property Fund</span></div>
+    <div class="cell"><span class="k">ENGINE</span><span class="v">Complete</span></div>
+    <div class="cell"><span class="k">ARTEFACTS</span><span class="v">6&nbsp;240</span></div>
+    <div class="cell"><span class="k">MODE</span><span class="v">Structural analysis</span></div>
+    <div class="cell grow"></div>
+    <div class="cell"><span class="clock" id="clock"></span></div>
+  </div>
+
+  <div class="body">
+    <div class="grail">
+      <div class="mark">R</div>
+      <div class="ticks">
+        <div class="tick">00</div>
+        <div class="tick on">02</div>
+        <div class="tick">03</div>
+        <div class="tick">04</div>
+      </div>
+      <div class="stat"><span class="led"></span><span class="lbl">ENGINE V1</span></div>
+    </div>
+
+    <div class="stage">
+      <div class="hdr">
+        <div class="framing">Coherence Scan <span class="dim">&mdash; Briarstone Property Fund</span></div>
+        <div class="subproc">This scan surfaces documented structural inconsistencies across the analyzed documentation.</div>
+        <div class="cap">6&nbsp;240 source artefacts analyzed &middot; <span class="em">Coherence Testing complete</span> &middot; detection-only.</div>
+      </div>
+
+      <div class="cols">
+
+        <!-- analytical focus + audit log -->
+        <div class="engine">
+          <div class="ch">Analytical focus</div>
+          <div class="focusrow"><span class="chk">&#10003;</span><div><div class="ft">Ingesting and classifying source documents</div><div class="fd">Classified by type, deduplicated, normalized to a common machine-readable form.</div></div></div>
+          <div class="focusrow"><span class="chk">&#10003;</span><div><div class="ft">Extracting facts under a fixed schema</div><div class="fd">Facts read from each document; the source of every value recorded.</div></div></div>
+          <div class="focusrow"><span class="chk">&#10003;</span><div><div class="ft">Reconstructing declared structures</div><div class="fd">Timelines, ownership layers, contractual commitments, and financial models aligned.</div></div></div>
+          <div class="focusrow"><span class="chk">&#10003;</span><div><div class="ft">Testing reconstructed structures for contradiction</div><div class="fd">Deterministic checks for whether the structures can all hold at once.</div></div></div>
+          <div class="focusrow"><span class="chk">&#10003;</span><div><div class="ft">Quantifying the reported-vs-reconstructed delta</div><div class="fd">Differences quantified under explicit assumptions.</div></div></div>
+          <div class="focusrow"><span class="chk">&#10003;</span><div><div class="ft">Tracing each finding to its source documents</div><div class="fd">Carried back to specific clauses in specific documents.</div></div></div>
+
+          <div class="audit">
+            <div class="ah">System audit log</div>
+            <div class="ll"><span class="t">12:31:48</span>initializing coherence engine</div>
+            <div class="ll"><span class="t">12:31:48</span>mounting dataroom</div>
+            <div class="ll"><span class="t">12:31:49</span>activating analysis modules</div>
+            <div class="ll"><span class="t">12:32:04</span>cross-layer consistency tests run</div>
+            <div class="ll"><span class="t">12:32:08</span>delta computation complete</div>
+            <div class="ll done"><span class="t">12:32:11</span>finding detected &mdash; reported vs reconstructed NAV</div>
+            <div class="ll emit"><span class="t">12:53:12</span>analysis complete &mdash; findings compiled</div>
+          </div>
+        </div>
+
+        <!-- surfaced finding -->
+        <div class="center">
+          <div class="ex-head"><span class="eyebrow">Surfaced structural exception &middot; documented variance</span></div>
+          <div class="ex-title">Reported vs reconstructed NAV</div>
+
+          <div class="seg claim">
+            <div class="sk">Declared &middot; reported</div>
+            <div class="sb">Reported NAV <span class="val">&euro;312.4M</span>, on a stabilized asset treatment under prevailing market conditions.</div>
+          </div>
+
+          <div class="seg reality">
+            <div class="sk">Reconstructed &middot; evidenced</div>
+            <div class="sb">Independently reconstructed NAV <span class="val">&euro;198.6M</span> from the documentary evidence.</div>
+          </div>
+
+          <div class="seg concern">
+            <div class="sk">Structural concern</div>
+            <div class="sb">A <span class="q">&minus;36.4%</span> delta separates the reported position from the reconstructed one across the analyzed documentation.</div>
+          </div>
+        </div>
+
+        <!-- evidence locker -->
+        <div class="locker">
+          <div class="ch row">Evidence locker <span class="badge">1 Finding</span></div>
+
+          <div class="docrow">
+            <div class="role">Valuation report</div>
+            <div class="fname">Briarstone_Q4_Valuation_Report.pdf</div>
+          </div>
+          <div class="docrow">
+            <div class="role">Operating model</div>
+            <div class="fname">Briarstone_Operating_Model_v12.xlsx</div>
+          </div>
+          <div class="docrow">
+            <div class="role">Facility agreement</div>
+            <div class="fname">Briarstone_Facility_Agreement.pdf</div>
+          </div>
+
+          <div class="chainnote">All remaining checks returned consistent.</div>
+          <div class="viewall">View structural finding</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+<script>
+  function clock(){
+    var d = new Date();
+    function p(x){ return (x<10?"0":"")+x; }
+    var el = document.getElementById("clock");
+    if (el) el.textContent = p(d.getUTCHours())+":"+p(d.getUTCMinutes())+":"+p(d.getUTCSeconds())+" UTC";
+  }
+  clock(); setInterval(clock, 1000);
+</script>
+</body>
+</html>
