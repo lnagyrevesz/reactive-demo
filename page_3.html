@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<!-- ReActive Demo - Page 3: The method. Option B (dominant stage + persistent track).
+     Memo-corrected pass. Public terms only. No internal taxonomy. Self-contained static. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReActive - The Method</title>
+<style>
+  :root {
+    --bg:#050505; --panel:#0a0a0a; --panel2:#0e0e0e;
+    --border:#262626; --border2:#1a1a1a;
+    --txt-main:#e8e8e8; --txt-mute:#9a9a9a; --txt-meta:#7a7a7a; --txt-dim:#565656;
+    --accent:#d4773a; --accent-br:#fb923c; --cyan:#5bbccf;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { height:100%; }
+  body {
+    background:var(--bg); color:var(--txt-main); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased; display:flex; flex-direction:column;
+    min-height:100vh; overflow-x:hidden;
+  }
+
+  .topbar {
+    display:flex; align-items:center; gap:18px; height:44px; padding:0 18px;
+    border-bottom:1px solid var(--border); background:var(--panel);
+    font-family:var(--mono); font-size:11px; flex:0 0 auto;
+  }
+  .wordmark { font-weight:600; letter-spacing:.5px; }
+  .wordmark .re { color:#c8c8c8; }
+  .wordmark .active { color:var(--accent-br); }
+  .brand { display:inline-flex; align-items:center; }
+  .brand img { height:18px; display:block; }
+  .brand .wordmark { display:none; }
+  .brand.fallback img { display:none; }
+  .brand.fallback .wordmark { display:inline; }
+  .crumb { color:var(--txt-meta); }
+  .topbar .spacer { flex:1; }
+  .topbar .sys { color:var(--txt-dim); letter-spacing:.5px; }
+  .topbar .clock { color:var(--txt-meta); }
+
+  .frame { display:flex; flex:1 1 auto; min-height:0; }
+  .rail { flex:0 0 56px; border-right:1px solid var(--border2); background:var(--panel2); }
+  .main { flex:1 1 auto; min-width:0; width:100%; padding:40px 56px 46px; overflow-y:auto; }
+
+  .eyebrow {
+    font-family:var(--mono); font-size:10.5px; letter-spacing:2.5px; text-transform:uppercase;
+    color:var(--accent); margin-bottom:14px;
+  }
+  h1 { font-size:30px; font-weight:600; letter-spacing:-.3px; color:var(--txt-main); margin-bottom:14px; }
+  .standfirst { font-size:16px; line-height:1.55; color:var(--txt-mute); max-width:70ch; margin-bottom:38px; }
+  .standfirst .na { color:var(--txt-meta); }
+
+  /* ---- persistent track: messy pile + full-width stations ---- */
+  .track { display:flex; align-items:flex-start; gap:0; overflow-x:auto; padding-bottom:6px; margin-bottom:12px; }
+
+  .pile { flex:0 0 auto; width:236px; display:flex; flex-direction:column; align-items:center; }
+  .pilesvg { width:230px; height:152px; display:block; }
+  .ptiny { font-family:var(--mono); font-size:8px; letter-spacing:.5px; fill:#6f6a58; }
+  .ptiny.dim { fill:#8a8472; }
+  .stamp { font-family:var(--mono); font-size:7px; letter-spacing:1px; fill:#d4773a; opacity:.5; }
+  .count {
+    font-family:var(--mono); font-size:10px; letter-spacing:.4px; color:var(--txt-meta);
+    margin-top:2px; text-align:center;
+  }
+  .count b { color:var(--txt-mute); font-weight:600; }
+
+  .handoff { flex:0 0 90px; height:2px; margin-top:29px; align-self:flex-start;
+    background:linear-gradient(to right,#8c8576,var(--cyan)); position:relative; }
+  .handoff::after {
+    content:""; position:absolute; right:-3px; top:-3px;
+    border-left:8px solid var(--cyan); border-top:4px solid transparent; border-bottom:4px solid transparent;
+  }
+  .handoff .flow { position:absolute; top:-1.5px; left:0; width:5px; height:5px; border-radius:50%; background:var(--cyan); opacity:0; }
+  @media (prefers-reduced-motion: no-preference) { .handoff .flow { animation:feed 2.4s linear infinite; } }
+  @keyframes feed { 0%{left:0;opacity:0} 12%{opacity:1} 84%{opacity:1} 100%{left:82px;opacity:0} }
+
+  .stations { flex:1 1 auto; display:flex; align-items:flex-start; min-width:0; }
+  .tconn { flex:0 0 26px; align-self:flex-start; margin-top:30px; height:1px; background:var(--border); transition:background .4s ease; }
+  .tconn.lit { background:var(--cyan); }
+  .station {
+    flex:1 1 0; min-width:108px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    padding:6px 4px 2px; opacity:.5; transition:opacity .4s ease;
+  }
+  .station.lit { opacity:1; }
+  .dot {
+    width:48px; height:48px; border-radius:50%; border:1.5px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-size:15px; color:var(--txt-meta); background:var(--panel);
+    transition:border-color .3s ease, color .3s ease, box-shadow .3s ease, transform .3s ease;
+  }
+  .station.lit .dot { border-color:var(--cyan); color:var(--cyan); }
+  .station.active .dot { box-shadow:0 0 0 5px rgba(91,188,207,.18); border-width:2px; transform:scale(1.08); }
+  .station.ai .dot { border-color:rgba(212,119,58,.5); color:var(--accent-br); }
+  .station.ai.lit .dot { border-color:var(--accent); }
+  .station.ai.active .dot { box-shadow:0 0 0 5px rgba(212,119,58,.22); border-width:2px; transform:scale(1.08); }
+  .tlabel { font-family:var(--mono); font-size:12px; letter-spacing:.2px; color:var(--txt-meta); text-align:center; white-space:normal; max-width:130px; line-height:1.3; }
+  .station.lit .tlabel { color:var(--txt-mute); }
+  .station.active .tlabel { color:var(--txt-main); }
+  .station.ai.active .tlabel { color:var(--accent-br); }
+
+  .boundary-note { font-family:var(--mono); font-size:11px; color:var(--txt-meta); letter-spacing:.3px; margin-bottom:30px; }
+  .boundary-note .em { color:var(--accent); }
+
+  /* ---- active-stage frame: attached to the lit station, lighter than the row ---- */
+  .method-block { position:relative; }
+  .caret {
+    position:absolute; width:0; height:0; left:0; top:0;
+    border-left:8px solid transparent; border-right:8px solid transparent;
+    border-bottom:9px solid var(--cyan); transform:translateX(-8px);
+    transition:left .35s ease, border-bottom-color .3s ease; opacity:0;
+  }
+  .caret.show { opacity:1; }
+  .caret.ai { border-bottom-color:var(--accent); }
+  .panel {
+    width:100%; border:1px solid var(--border2); border-left:2px solid var(--cyan); border-radius:4px;
+    background:var(--panel); padding:26px 36px; min-height:0; position:relative;
+    transition:border-left-color .35s ease;
+  }
+  .panel.ai { border-left-color:var(--accent); }
+  .panel-inner { display:flex; gap:32px; align-items:flex-start; opacity:1; transition:opacity .3s ease; }
+  .panel-inner.swap { opacity:0; }
+  .bignum { font-family:var(--mono); font-size:64px; line-height:.9; font-weight:300; color:var(--border); flex:0 0 auto; user-select:none; }
+  .panel.ai .bignum { color:#3a2410; }
+  .pbody { flex:1 1 auto; min-width:0; padding-top:8px; }
+  .ptype {
+    display:inline-block; font-family:var(--mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase;
+    padding:3px 9px; border-radius:2px; margin-bottom:18px; color:var(--cyan); border:1px solid rgba(91,188,207,.4);
+  }
+  .panel.ai .ptype { color:var(--accent-br); border-color:rgba(212,119,58,.5); }
+  .ptitle { font-size:23px; font-weight:600; color:var(--txt-main); margin-bottom:14px; letter-spacing:-.2px; }
+  .pline { font-size:15.5px; color:var(--txt-main); margin-bottom:18px; font-weight:500; }
+  .panel.ai .pline { color:#f0d4bd; }
+  .pexp { font-size:14.5px; line-height:1.72; color:var(--txt-mute); max-width:84ch; }
+
+  .controls { display:flex; align-items:center; gap:16px; margin-top:26px; font-family:var(--mono); font-size:11px; color:var(--txt-meta); }
+  .btn {
+    display:inline-flex; align-items:center; gap:7px; background:none; border:1px solid var(--border);
+    color:var(--txt-mute); border-radius:3px; padding:7px 13px; cursor:pointer;
+    font-family:var(--mono); font-size:11px; letter-spacing:.3px; transition:border-color .2s ease, color .2s ease;
+  }
+  .btn:hover { border-color:var(--txt-dim); color:var(--txt-main); }
+  .status { margin-left:auto; color:var(--txt-dim); letter-spacing:.5px; }
+  .status.done { color:var(--cyan); }
+
+  @media (max-width:860px) {
+    .main { padding:28px 18px 34px; }
+    h1 { font-size:23px; }
+    .panel { padding:24px 22px; }
+    .panel-inner { flex-direction:column; gap:14px; }
+    .bignum { font-size:74px; }
+    .ptitle { font-size:21px; }
+    .station { min-width:96px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <span class="brand" id="p3brand"><img src="assets/logos/reactive_logo_text.webp" alt="ReActive" onerror="document.getElementById('p3brand').classList.add('fallback')"><span class="wordmark"><span class="re">Re</span><span class="active">Active</span></span></span>
+    <span class="crumb">The Pipeline</span>
+    <span class="spacer"></span>
+    <span class="sys">ENGINE V1</span>
+    <span class="clock" id="clock"></span>
+  </div>
+
+  <div class="frame">
+    <div class="rail" aria-hidden="true"></div>
+
+    <main class="main">
+      <div class="eyebrow">From documents to deltas</div>
+      <h1>The ReActive Reality Check</h1>
+      <p class="standfirst">ReActive reconstructs portfolio structure from documentary evidence and tests for contradiction.</p>
+
+      <div class="method-block" id="methodBlock">
+      <div class="track">
+        <div class="pile">
+          <svg class="pilesvg" viewBox="0 0 230 152" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A messy physical pile of papers and folders entering the pipeline">
+            <ellipse cx="116" cy="146" rx="82" ry="6" fill="#000000" opacity="0.28"/>
+            <g transform="rotate(-8 96 96)">
+              <rect x="32" y="38" width="56" height="12" rx="3" fill="#6f6a55"/>
+              <rect x="32" y="46" width="152" height="98" rx="4" fill="#736d57"/>
+            </g>
+            <g transform="rotate(6 122 92)">
+              <rect x="150" y="34" width="46" height="12" rx="3" fill="#7e7766"/>
+              <rect x="46" y="42" width="150" height="100" rx="4" fill="#857e6d"/>
+            </g>
+            <g transform="rotate(-5 100 96)">
+              <rect x="56" y="34" width="94" height="108" rx="2" fill="#ddd6c4" stroke="#c8bfa6" stroke-width="0.5"/>
+              <rect x="64" y="48" width="62" height="3" fill="#a89e84"/>
+              <rect x="64" y="56" width="72" height="3" fill="#b3a98f"/>
+              <rect x="64" y="64" width="54" height="3" fill="#b3a98f"/>
+              <text x="64" y="92" class="ptiny">LEGAL</text>
+              <rect x="64" y="100" width="58" height="2.5" fill="#c4ba9d"/>
+            </g>
+            <g transform="rotate(7 120 92)">
+              <rect x="70" y="30" width="92" height="110" rx="2" fill="#e6dfcd" stroke="#cfc6ad" stroke-width="0.5"/>
+              <rect x="80" y="44" width="60" height="34" fill="none" stroke="#bcb295" stroke-width="1"/>
+              <line x1="80" y1="55" x2="140" y2="55" stroke="#bcb295" stroke-width="1"/>
+              <line x1="80" y1="66" x2="140" y2="66" stroke="#bcb295" stroke-width="1"/>
+              <line x1="110" y1="44" x2="110" y2="78" stroke="#bcb295" stroke-width="1"/>
+              <text x="80" y="98" class="ptiny">4.2</text>
+              <rect x="94" y="94" width="42" height="2.5" fill="#bcb295"/>
+              <rect x="80" y="104" width="56" height="2.5" fill="#c4ba9d"/>
+            </g>
+            <g transform="rotate(-2 110 98)">
+              <rect x="80" y="38" width="92" height="106" rx="2" fill="#d9d2c0" stroke="#c5bca3" stroke-width="0.5"/>
+              <rect x="90" y="50" width="50" height="3" fill="#a89e84"/>
+              <text x="90" y="72" class="ptiny">LEASE</text>
+              <rect x="90" y="80" width="64" height="2.5" fill="#b3a98f"/>
+              <rect x="90" y="88" width="48" height="2.5" fill="#b3a98f"/>
+              <text x="118" y="126" class="ptiny dim">12·03·2024</text>
+            </g>
+            <g transform="rotate(3 122 92)">
+              <rect x="88" y="32" width="92" height="108" rx="2" fill="#efe8da" stroke="#d6cdb4" stroke-width="0.5"/>
+              <rect x="98" y="44" width="58" height="3" fill="#a89e84"/>
+              <rect x="98" y="52" width="66" height="3" fill="#b3a98f"/>
+              <text x="98" y="78" class="ptiny">NAV</text>
+              <text x="128" y="78" class="ptiny">DEBT</text>
+              <rect x="98" y="86" width="54" height="2.5" fill="#b3a98f"/>
+              <rect x="98" y="94" width="60" height="2.5" fill="#c4ba9d"/>
+              <circle cx="152" cy="116" r="15" fill="none" stroke="#d4773a" stroke-width="2" opacity="0.32"/>
+              <text x="152" y="119" text-anchor="middle" class="stamp">REC</text>
+            </g>
+            <rect x="150" y="22" width="14" height="22" rx="2" fill="#a85f44" transform="rotate(4 157 33)"/>
+            <path d="M104 30 q-6 -8 2 -12 q8 -4 9 6 l-1 16" fill="none" stroke="#8f8f8f" stroke-width="1.6" transform="rotate(3 110 30)"/>
+          </svg>
+          <div class="count">VDR as delivered</div>
+        </div>
+
+        <div class="handoff"><span class="flow"></span></div>
+
+        <div class="stations" id="stations"></div>
+      </div>
+      <div class="boundary-note"><span class="em">LLM-assisted at extraction.</span> Deterministic everywhere downstream.</div>
+      <div class="caret" id="caret"></div>
+
+      <div class="panel" id="panel">
+        <div class="panel-inner" id="panelInner">
+          <div class="bignum" id="bignum">01</div>
+          <div class="pbody">
+            <span class="ptype" id="ptype">Deterministic</span>
+            <div class="ptitle" id="ptitle">Ingestion</div>
+            <div class="pline" id="pline">Documents classified and normalized.</div>
+            <div class="pexp" id="pexp"></div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="playbtn">&#10073;&#10073; Pause</button>
+        <button class="btn" id="replaybtn">&#8635; Replay</button>
+        <span class="status" id="status">Stage 1 of 6</span>
+      </div>
+    </main>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STAGES = [
+    { n:"01", t:"Ingestion", track:"Ingestion", ai:false,
+      line:"Documents classified and normalized.",
+      exp:"The raw dataroom enters as delivered. Documents are classified by type, duplicates removed, and every format converted to a common machine-readable form before anything is read." },
+    { n:"02", t:"Extraction", track:"Extraction", ai:true,
+      line:"Facts extracted. Sources recorded.",
+      exp:"The only stage that uses a language model. Facts are extracted under a fixed schema, with the source of every value recorded. Divergent values are preserved, not reconciled. This is the AI boundary; everything after it is deterministic." },
+    { n:"03", t:"Structure Reconstruction", track:"Structure Reconstruction", ai:false,
+      line:"Structures rebuilt independently.",
+      exp:"Entity, debt, temporal, and income layers are rebuilt from the extracted facts in pure code. The reconstruction is independent of the reported figures, so it can be compared against them rather than derived from them." },
+    { n:"04", t:"Coherence Testing", track:"Coherence Testing", ai:false,
+      line:"Internal contradictions tested.",
+      exp:"Deterministic tests check whether the reconstructed structures can all be true at once. Where claims cannot simultaneously hold, the contradiction is surfaced." },
+    { n:"05", t:"Delta Computation", track:"Delta Computation", ai:false,
+      line:"Reported and reconstructed values compared.",
+      exp:"The reconstructed values are compared to the reported ones, and the difference is expressed as a quantified delta with its documentary derivation. Where assumptions are required, they are made explicit and traceable. The output is a quantified delta, never a recommendation." },
+    { n:"06", t:"Findings", track:"Findings", ai:false,
+      line:"Evidence chain complete.",
+      exp:"Each finding carries a complete evidence chain to specific clauses in specific documents. Given the same corpus, the same findings are produced every time." }
+  ];
+
+  var STEP = 2800;
+
+  var stations = document.getElementById("stations");
+  var panel = document.getElementById("panel");
+  var methodBlock = document.getElementById("methodBlock");
+  var caret = document.getElementById("caret");
+  var panelInner = document.getElementById("panelInner");
+  var bignum = document.getElementById("bignum");
+  var ptype = document.getElementById("ptype");
+  var ptitle = document.getElementById("ptitle");
+  var pline = document.getElementById("pline");
+  var pexp = document.getElementById("pexp");
+  var playbtn = document.getElementById("playbtn");
+  var replaybtn = document.getElementById("replaybtn");
+  var statusEl = document.getElementById("status");
+
+  var stationEls = [], connEls = [];
+
+  STAGES.forEach(function(s, i){
+    if (i > 0){
+      var conn = document.createElement("div");
+      conn.className = "tconn";
+      connEls.push(conn);
+      stations.appendChild(conn);
+    }
+    var st = document.createElement("div");
+    st.className = "station" + (s.ai ? " ai" : "");
+    st.innerHTML = '<div class="dot">' + s.n + '</div><div class="tlabel">' + s.track + '</div>';
+    st.addEventListener("click", function(){ jumpTo(i); });
+    stationEls.push(st);
+    stations.appendChild(st);
+  });
+
+  var idx = 0;
+  var paused = false;
+  var complete = false;
+  var timer = null;
+
+  function positionCaret(i){
+    if (!methodBlock || !caret || !panel) return;
+    var st = stationEls[i];
+    if (!st) return;
+    var br = methodBlock.getBoundingClientRect();
+    var sr = st.getBoundingClientRect();
+    caret.style.left = ((sr.left + sr.width / 2) - br.left) + "px";
+    caret.style.top = (panel.offsetTop - 9) + "px";
+    caret.classList.add("show");
+    caret.classList.toggle("ai", STAGES[i].ai);
+  }
+
+  function render(i){
+    var s = STAGES[i];
+    panelInner.classList.add("swap");
+    setTimeout(function(){
+      bignum.textContent = s.n;
+      ptype.textContent = s.ai ? "AI-assisted" : "Deterministic";
+      ptitle.textContent = s.t;
+      pline.textContent = s.line;
+      pexp.textContent = s.exp;
+      panel.classList.toggle("ai", s.ai);
+      panelInner.classList.remove("swap");
+    }, 200);
+
+    stationEls.forEach(function(el, j){
+      el.classList.toggle("active", j === i);
+      if (j <= i) el.classList.add("lit");
+    });
+    connEls.forEach(function(c, j){ if (j < i) c.classList.add("lit"); });
+
+    if (complete) { statusEl.textContent = "Pipeline complete"; statusEl.classList.add("done"); }
+    else statusEl.textContent = "Stage " + (i + 1) + " of 6";
+
+    requestAnimationFrame(function(){ positionCaret(i); });
+  }
+
+  window.addEventListener("resize", function(){ positionCaret(idx); });
+
+  function tick(){
+    if (paused || complete) return;
+    if (idx >= STAGES.length - 1){ finish(); return; }
+    idx++;
+    render(idx);
+    if (idx >= STAGES.length - 1){ finish(); return; }
+    timer = setTimeout(tick, STEP);
+  }
+
+  function finish(){
+    complete = true;
+    render(STAGES.length - 1);
+    playbtn.style.display = "none";
+  }
+
+  function jumpTo(i){
+    clearTimeout(timer);
+    paused = true;
+    complete = (i === STAGES.length - 1) ? complete : false;
+    idx = i;
+    render(i);
+    if (!complete){
+      playbtn.style.display = "";
+      playbtn.innerHTML = "&#9658; Play";
+      statusEl.textContent = "Stage " + (i + 1) + " of 6 (paused)";
+    }
+  }
+
+  playbtn.addEventListener("click", function(){
+    if (complete) return;
+    paused = !paused;
+    if (paused){
+      clearTimeout(timer);
+      playbtn.innerHTML = "&#9658; Play";
+      statusEl.textContent = "Stage " + (idx + 1) + " of 6 (paused)";
+    } else {
+      playbtn.innerHTML = "&#10073;&#10073; Pause";
+      statusEl.textContent = "Stage " + (idx + 1) + " of 6";
+      timer = setTimeout(tick, 500);
+    }
+  });
+
+  replaybtn.addEventListener("click", function(){
+    clearTimeout(timer);
+    idx = 0; paused = false; complete = false;
+    stationEls.forEach(function(el){ el.classList.remove("lit","active"); });
+    connEls.forEach(function(c){ c.classList.remove("lit"); });
+    statusEl.classList.remove("done");
+    playbtn.style.display = "";
+    playbtn.innerHTML = "&#10073;&#10073; Pause";
+    render(0);
+    timer = setTimeout(tick, 900);
+  });
+
+  function clock(){
+    var d = new Date();
+    function p(x){ return (x < 10 ? "0" : "") + x; }
+    var el = document.getElementById("clock");
+    if (el) el.textContent = p(d.getUTCHours()) + ":" + p(d.getUTCMinutes()) + ":" + p(d.getUTCSeconds()) + " UTC";
+  }
+  clock(); setInterval(clock, 1000);
+
+  render(0);
+  timer = setTimeout(tick, 1000);
+})();
+</script>
+</body>
+</html>
