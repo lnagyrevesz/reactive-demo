@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<!-- ReActive Demo - Page 4: post-extraction execution workstation, one surfaced exception (NTH-001).
+     All figures verified vs TEST_3_REFERENCE_LOCK (19 Jun 2026). Real sources only.
+     Document viewer is wired to a configurable dataroom path; it opens real hosted assets and
+     states honestly when a source is not yet published. No faked access. Self-contained static. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReActive - Execution Workstation</title>
+<style>
+  :root {
+    --bg:#050505; --panel:#0a0a0a; --panel2:#0e0e0e; --panel3:#0c0c0c;
+    --border:#262626; --border2:#1a1a1a; --border3:#141414;
+    --txt-main:#e8e8e8; --txt-mute:#9a9a9a; --txt-meta:#7a7a7a; --txt-dim:#565656; --txt-faint:#3e3e3e;
+    --accent:#d4773a; --accent-br:#fb923c; --cyan:#5bbccf; --cyan-dim:#3c6e78; --green:#5e9e6f;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { height:100%; }
+  body { background:var(--bg); color:var(--txt-main); font-family:var(--sans); -webkit-font-smoothing:antialiased; height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+
+  /* system bar */
+  .sysbar { display:flex; align-items:center; gap:0; height:30px; flex:0 0 auto; border-bottom:1px solid var(--border); background:#000; font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; }
+  .sysbar .cell { padding:0 14px; height:100%; display:flex; align-items:center; gap:7px; border-right:1px solid var(--border3); color:var(--txt-dim); }
+  .sysbar .cell .k { color:var(--txt-faint); }
+  .sysbar .cell .v { color:var(--txt-mute); }
+  .sysbar .cell.run .v { color:var(--cyan-dim); }
+  .sysbar .grow { flex:1; border-right:0; }
+  .sysbar .clock { color:var(--txt-meta); }
+
+  .body { flex:1 1 auto; display:flex; min-height:0; }
+
+  /* global persistent rail */
+  .grail { flex:0 0 46px; border-right:1px solid var(--border); background:#070707; display:flex; flex-direction:column; align-items:center; padding:12px 0; }
+  .grail .mark { font-family:var(--mono); font-weight:700; font-size:14px; color:var(--accent-br); margin-bottom:22px; }
+  .grail .ticks { display:flex; flex-direction:column; gap:14px; align-items:center; flex:1; }
+  .grail .tick { font-family:var(--mono); font-size:9px; color:var(--txt-faint); writing-mode:vertical-rl; letter-spacing:.15em; }
+  .grail .tick.on { color:var(--cyan); }
+  .grail .stat { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .grail .stat .led { width:6px; height:6px; border-radius:50%; background:var(--green); }
+  .grail .stat .lbl { font-family:var(--mono); font-size:8px; color:var(--txt-dim); writing-mode:vertical-rl; letter-spacing:.1em; }
+
+  /* main scroll region: header + columns */
+  .stage { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
+  .hdr { flex:0 0 auto; padding:18px 24px 12px; border-bottom:1px solid var(--border2); }
+  .framing { font-size:16px; font-weight:600; color:var(--txt-main); letter-spacing:-.1px; }
+  .framing .dim { color:var(--txt-meta); font-weight:400; }
+  .subproc { font-family:var(--mono); font-size:10px; color:var(--txt-dim); letter-spacing:.04em; margin-top:7px; }
+
+  .strip { display:flex; align-items:flex-start; gap:0; margin-top:14px; }
+  .ss { display:flex; flex-direction:column; gap:6px; align-items:center; min-width:78px; }
+  .ss .sdot { width:24px; height:24px; border-radius:50%; border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:9px; color:var(--txt-dim); background:var(--panel); }
+  .ss .slabel { font-family:var(--mono); font-size:8.5px; letter-spacing:.04em; color:var(--txt-dim); text-align:center; line-height:1.3; }
+  .ss.dim { opacity:.4; }
+  .ss.dim.ai .sdot { border-color:rgba(212,119,58,.45); color:var(--accent); }
+  .ss.on .sdot { border-color:var(--cyan); color:var(--cyan); }
+  .ss.on .slabel { color:var(--txt-mute); }
+  .sconn { width:18px; height:1px; margin-top:12px; background:var(--border2); }
+  .sconn.on { background:var(--cyan-dim); }
+  .cap { font-family:var(--mono); font-size:10px; color:var(--txt-meta); letter-spacing:.04em; margin-top:11px; }
+  .cap .em { color:var(--accent); }
+
+  /* three working columns */
+  .cols { flex:1 1 auto; display:flex; min-height:0; }
+  .engine { flex:0 0 216px; border-right:1px solid var(--border2); padding:16px 14px; overflow-y:auto; }
+  .center { flex:1 1 auto; min-width:0; padding:18px 22px; overflow-y:auto; }
+  .locker { flex:0 0 350px; border-left:1px solid var(--border2); padding:16px 16px; overflow-y:auto; background:#070707; }
+
+  .ch { font-family:var(--mono); font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--txt-dim); margin-bottom:12px; }
+
+  /* engine column */
+  .estage { display:flex; align-items:center; gap:8px; padding:7px 9px; border:1px solid var(--border3); border-radius:3px; margin-bottom:5px; background:var(--panel); }
+  .estage .chk { color:var(--green); font-size:10px; }
+  .estage .en { font-family:var(--mono); font-size:8.5px; color:var(--txt-faint); }
+  .estage .et { font-size:10.5px; color:var(--txt-mute); }
+  .audit { margin-top:16px; border:1px solid var(--border3); border-radius:3px; background:#040404; padding:11px; }
+  .audit .ah { font-family:var(--mono); font-size:8.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--txt-faint); margin-bottom:8px; }
+  .ll { font-family:var(--mono); font-size:9.5px; line-height:1.95; color:var(--cyan-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ll .t { color:var(--txt-faint); }
+  .ll.emit { color:var(--accent-br); }
+
+  /* center: surfaced exception thread */
+  .ex-head { display:flex; align-items:baseline; gap:10px; margin-bottom:4px; }
+  .ex-head .eyebrow { font-family:var(--mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--txt-meta); }
+  .ex-id { font-family:var(--mono); font-size:10px; color:var(--cyan); }
+  .ex-title { font-size:19px; font-weight:600; color:var(--txt-main); margin-bottom:18px; letter-spacing:-.2px; }
+
+  .seg { border:1px solid var(--border2); border-radius:4px; background:var(--panel); margin-bottom:10px; }
+  .seg .sk { font-family:var(--mono); font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; padding:9px 16px 0; }
+  .seg .sb { padding:8px 16px 14px; font-size:13px; line-height:1.6; color:var(--txt-mute); }
+  .seg .sb .src { font-family:var(--mono); font-size:10px; color:var(--cyan); }
+  .seg .sb .val { font-family:var(--mono); color:var(--txt-main); }
+  .seg .sb .fn { font-size:11px; color:var(--txt-dim); margin-top:6px; font-family:var(--mono); }
+  .seg.claim { border-left:2px solid var(--cyan-dim); }
+  .seg.claim .sk { color:var(--cyan-dim); }
+  .seg.reality { border-left:2px solid var(--cyan); }
+  .seg.reality .sk { color:var(--cyan); }
+  .seg.concern { border-left:2px solid var(--accent); background:#0c0a06; }
+  .seg.concern .sk { color:var(--accent); }
+  .seg.concern .sb { color:#d8d2c8; }
+  .seg.concern .sb .q { color:var(--accent-br); font-family:var(--mono); }
+
+  .ten { width:100%; border-collapse:collapse; margin-top:9px; }
+  .ten td { font-family:var(--mono); font-size:11px; padding:4px 0; border-bottom:1px solid var(--border3); }
+  .ten tr:last-child td { border-bottom:0; }
+  .ten .tn { color:var(--txt-mute); }
+  .ten .tu { color:var(--txt-dim); padding-left:14px; }
+  .ten .td2 { color:var(--cyan); text-align:right; }
+
+  /* evidence locker */
+  .docrow { border:1px solid var(--border3); border-radius:3px; background:var(--panel); padding:10px 11px; margin-bottom:8px; }
+  .docrow .role { font-family:var(--mono); font-size:8px; letter-spacing:.1em; text-transform:uppercase; color:var(--cyan-dim); margin-bottom:5px; }
+  .docrow .dt { font-size:11.5px; color:var(--txt-mute); line-height:1.4; margin-bottom:7px; }
+  .docrow .fnrow { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .docrow .fname { font-family:var(--mono); font-size:9px; color:var(--txt-meta); word-break:break-all; flex:1; }
+  .docrow .fname.pending { color:var(--txt-faint); font-style:italic; }
+  .openbtn { flex:0 0 auto; font-family:var(--mono); font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:var(--cyan); border:1px solid var(--cyan-dim); border-radius:2px; padding:4px 9px; background:none; cursor:pointer; transition:background .2s; }
+  .openbtn:hover { background:rgba(91,188,207,.1); }
+  .openbtn[disabled] { color:var(--txt-faint); border-color:var(--border2); cursor:not-allowed; }
+
+  .subsec { margin-top:18px; }
+  .derived { border:1px solid var(--border3); border-radius:3px; background:#040404; padding:11px; font-family:var(--mono); font-size:9.5px; line-height:1.85; color:var(--txt-mute); }
+  .derived .op { color:var(--cyan); }
+  .derived .res { color:var(--accent-br); }
+  .chain { border:1px solid var(--border3); border-radius:3px; background:var(--panel); padding:11px; font-family:var(--mono); font-size:9.5px; line-height:1.9; color:var(--txt-mute); }
+  .chain .s { color:var(--cyan); } .chain .a { color:var(--txt-faint); }
+
+  .build { border:1px dashed var(--border); border-radius:3px; background:#0b0905; padding:11px; margin-top:16px; }
+  .build .bh { font-family:var(--mono); font-size:8.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:9px; }
+  .build .bl { font-family:var(--mono); font-size:9.5px; line-height:1.7; color:var(--txt-mute); margin-bottom:4px; }
+  .build .bl .ok { color:var(--green); } .build .bl code { color:var(--accent-br); }
+  .build .bn { font-family:var(--mono); font-size:9px; color:var(--txt-dim); margin-top:8px; padding-top:8px; border-top:1px solid var(--border3); line-height:1.5; }
+
+  /* modal viewer */
+  .ov { position:fixed; inset:0; background:rgba(0,0,0,.78); z-index:50; display:none; align-items:center; justify-content:center; padding:34px; }
+  .ov.show { display:flex; }
+  .modal { width:min(960px,100%); height:min(680px,100%); background:var(--panel); border:1px solid var(--border); border-radius:5px; display:flex; flex-direction:column; overflow:hidden; }
+  .mhead { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border2); font-family:var(--mono); }
+  .mhead .mrole { font-size:8.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--cyan-dim); border:1px solid var(--border2); border-radius:2px; padding:3px 7px; }
+  .mhead .mfile { font-size:10px; color:var(--txt-meta); flex:1; word-break:break-all; }
+  .mhead .mx { font-size:14px; color:var(--txt-dim); cursor:pointer; border:0; background:none; padding:4px 8px; }
+  .mhead .mx:hover { color:var(--txt-main); }
+  .mbody { flex:1 1 auto; position:relative; background:#0e0e0e; }
+  .mbody iframe { width:100%; height:100%; border:0; background:#fff; }
+  .mph { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center; padding:30px; }
+  .mph .mph-t { font-family:var(--mono); font-size:11px; color:var(--txt-mute); }
+  .mph .mph-p { font-family:var(--mono); font-size:10px; color:var(--cyan); word-break:break-all; }
+  .mph .mph-n { font-family:var(--mono); font-size:9.5px; color:var(--txt-dim); max-width:46ch; line-height:1.6; }
+  .mderived { padding:22px 26px; overflow-y:auto; font-family:var(--mono); font-size:12px; line-height:2; color:var(--txt-mute); }
+  .mderived .op { color:var(--cyan); } .mderived .res { color:var(--accent-br); }
+
+  @media (max-width:1180px){ .cols{flex-direction:column;} .engine,.locker{flex:0 0 auto;border:0;border-top:1px solid var(--border2);} .body{overflow-y:auto;} body{overflow:auto;height:auto;} }
+</style>
+</head>
+<body>
+
+  <div class="sysbar">
+    <div class="cell"><span class="k">CORPUS</span><span class="v">NorthGate</span></div>
+    <div class="cell run"><span class="k">RUN</span><span class="v">Test #3 &middot; 19 Jun 2026</span></div>
+    <div class="cell"><span class="k">STAGES</span><span class="v">03&ndash;06 shown</span></div>
+    <div class="cell"><span class="k">MODE</span><span class="v">deterministic</span></div>
+    <div class="cell grow"></div>
+    <div class="cell"><span class="clock" id="clock"></span></div>
+  </div>
+
+  <div class="body">
+    <div class="stage">
+      <div class="hdr">
+        <div class="framing">Extraction is off-screen. <span class="dim">Everything after it is shown here.</span></div>
+        <div class="subproc">Stages 01 and 02 ran off-screen. Reconstruction through Findings is shown in full, traced on a single surfaced exception.</div>
+
+        <div class="strip">
+          <div class="ss dim"><div class="sdot">01</div><div class="slabel">Ingestion</div></div>
+          <div class="sconn"></div>
+          <div class="ss dim ai"><div class="sdot">02</div><div class="slabel">Extraction</div></div>
+          <div class="sconn on"></div>
+          <div class="ss on"><div class="sdot">03</div><div class="slabel">Structure<br>Reconstruction</div></div>
+          <div class="sconn on"></div>
+          <div class="ss on"><div class="sdot">04</div><div class="slabel">Coherence<br>Testing</div></div>
+          <div class="sconn on"></div>
+          <div class="ss on"><div class="sdot">05</div><div class="slabel">Delta<br>Computation</div></div>
+          <div class="sconn on"></div>
+          <div class="ss on"><div class="sdot">06</div><div class="slabel">Findings</div></div>
+        </div>
+        <div class="cap"><span class="em">LLM-assisted at extraction.</span> Deterministic everywhere downstream.</div>
+      </div>
+
+      <div class="cols">
+
+        <!-- engine state + audit log -->
+        <div class="engine">
+          <div class="ch">Engine state</div>
+          <div class="estage"><span class="chk">&#10003;</span><span class="en">03</span><span class="et">Structure Reconstruction</span></div>
+          <div class="estage"><span class="chk">&#10003;</span><span class="en">04</span><span class="et">Coherence Testing</span></div>
+          <div class="estage"><span class="chk">&#10003;</span><span class="en">05</span><span class="et">Delta Computation</span></div>
+          <div class="estage"><span class="chk">&#10003;</span><span class="en">06</span><span class="et">Findings</span></div>
+          <div class="audit">
+            <div class="ah">Audit log</div>
+            <div class="ll"><span class="t">12:04:01</span> load rent_roll</div>
+            <div class="ll"><span class="t">12:04:01</span> parse tenancies[] &rarr; 38</div>
+            <div class="ll"><span class="t">12:04:02</span> filter break_date &isin; window</div>
+            <div class="ll"><span class="t">12:04:02</span> matched &rarr; 5</div>
+            <div class="ll"><span class="t">12:04:02</span> &sum; rent &rarr; 2,846,924</div>
+            <div class="ll"><span class="t">12:04:02</span> ratio / 10,568,623 &rarr; 0.269</div>
+            <div class="ll emit"><span class="t">12:04:02</span> emit NTH-001</div>
+          </div>
+        </div>
+
+        <!-- surfaced exception thread -->
+        <div class="center">
+          <div class="ex-head"><span class="eyebrow">Surfaced structural exception</span><span class="ex-id">NTH-001</span></div>
+          <div class="ex-title">Exit window structural tension</div>
+
+          <div class="seg claim">
+            <div class="sk">Reported position</div>
+            <div class="sb">
+              Investment model carries a Year 7 disposal at a <span class="val">7.5%</span> exit cap rate, exit value <span class="val">&pound;127,862,456</span>. Board minutes confirm the disposal window in <span class="val">H1 2027</span>.
+              <div class="fn">cap rate / exit value &mdash; investment model &middot; window &mdash; board minutes</div>
+            </div>
+          </div>
+
+          <div class="seg reality">
+            <div class="sk">Reconstructed reality</div>
+            <div class="sb">
+              The rent roll carries break options on five of 38 tenancies exercisable in 2027, the earliest on 15 January 2027.
+              <table class="ten">
+                <tr><td class="tn">H&amp;M Fashion Retail</td><td class="tu">Unit 02</td><td class="td2">15 Jan 2027</td></tr>
+                <tr><td class="tn">Next Retail Ltd</td><td class="tu">Unit 04</td><td class="td2">20 Jan 2027</td></tr>
+                <tr><td class="tn">Pandora Jewellery</td><td class="tu">Unit 08</td><td class="td2">28 Feb 2027</td></tr>
+                <tr><td class="tn">Virgin Money</td><td class="tu">Unit 14</td><td class="td2">14 Mar 2027</td></tr>
+                <tr><td class="tn">Swarovski</td><td class="tu">Unit 30</td><td class="td2">14 May 2027</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="seg concern">
+            <div class="sk">Structural concern</div>
+            <div class="sb">
+              <span class="q">&pound;2,846,924</span> of contracted rent, <span class="q">26.9%</span> of the <span class="val">&pound;10,568,623</span> total, is exposed to break within the disposal window. The exit valuation is taken on an income base that is not contractually secured through the exit.
+            </div>
+          </div>
+        </div>
+
+        <!-- evidence locker -->
+        <div class="locker">
+          <div class="ch">Document evidence</div>
+
+          <div class="docrow">
+            <div class="role">Rent roll</div>
+            <div class="dt">Tenancy schedule &mdash; contracted rents and 2027 break options by unit. Extracted from <span style="font-family:var(--mono);font-size:9px;color:var(--txt-meta)">NorthGate_Tenant_Schedule_Rent_Roll_Dec2024.xlsx</span>.</div>
+            <div class="fnrow">
+              <span class="fname">NorthGate_Tenant_Schedule_Rent_Roll_Dec2024.pdf</span>
+              <button class="openbtn" data-doc="rentroll">Open</button>
+            </div>
+          </div>
+
+          <div class="docrow">
+            <div class="role">Investment model</div>
+            <div class="dt">Divestment parameters &mdash; exit cap rate and exit value (<span style="font-family:var(--mono);font-size:9px;color:var(--cyan)">divestment_parameters.exit_cap_rate</span>).</div>
+            <div class="fnrow">
+              <span class="fname">NorthGate_Financial_Model_Assumptions_Snapshot_Dec2025.pdf</span>
+              <button class="openbtn" data-doc="model">Open</button>
+            </div>
+          </div>
+
+          <div class="docrow">
+            <div class="role">Board minutes</div>
+            <div class="dt">Confirmed disposal window &mdash; H1 2027 (Year 7). Cap rate and exit value: not stated in minutes.</div>
+            <div class="fnrow">
+              <span class="fname">Board_Meeting_Minutes_Feb2025.pdf</span>
+              <button class="openbtn" data-doc="boardminutes">Open</button>
+            </div>
+          </div>
+
+          <div class="subsec">
+            <div class="ch">Derived evidence</div>
+            <button class="derived" data-doc="derived" style="display:block;width:100%;text-align:left;border:1px solid var(--border3);cursor:pointer">
+              break_date &isin; exit_window <span class="op">?</span> include : exclude<br>
+              &sum; contracted_rent of matched <span class="op">&rarr;</span> 2,846,924<br>
+              &divide; total 10,568,623 <span class="op">&rarr;</span> <span class="res">0.269</span>
+            </button>
+          </div>
+
+          <div class="subsec">
+            <div class="ch">Finding chain</div>
+            <div class="chain"><span class="s">rent roll</span> <span class="a">&rarr;</span> <span class="s">tenancies[]</span> <span class="a">&rarr;</span> <span class="s">2027 break set</span> <span class="a">&rarr;</span> <span class="s">&pound;2,846,924 / 26.9%</span> <span class="a">&rarr;</span> <span class="s">NTH-001</span></div>
+          </div>
+
+          <div class="build">
+            <div class="bh">Build receipt</div>
+            <div class="bl"><span class="ok">+</span> doctype <code>rent_roll</code> added (was metadata_only, never extracted)</div>
+            <div class="bl"><span class="ok">+</span> <code>rent_roll_schema.json</code> v1.0 &middot; <code>rent_roll_prompt.txt</code> v2</div>
+            <div class="bl"><span class="ok">+</span> <code>NorthGate_Tenant_Schedule_Rent_Roll_Dec2024.xlsx</code> &rarr; 38 rows</div>
+            <div class="bl"><span class="ok">&#8635;</span> <code>fo_nth_001_exit_window.py</code> rewritten to aggregate from the real <code>tenancies</code> array</div>
+            <div class="bn">Staged from a real run on the cleaned corpus. Not live execution.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- viewer -->
+  <div class="ov" id="ov">
+    <div class="modal">
+      <div class="mhead">
+        <span class="mrole" id="mrole">Document</span>
+        <span class="mfile" id="mfile"></span>
+        <button class="mx" id="mx" aria-label="Close">&#10005;</button>
+      </div>
+      <div class="mbody" id="mbody"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  // Path under which the published source assets are hosted. Edit to match your repo.
+  var DATAROOM = "dataroom/";
+
+  var DOCS = {
+    rentroll: {
+      role:"Rent roll",
+      file:"NorthGate_Tenant_Schedule_Rent_Roll_Dec2024.pdf",
+      sourceNote:"PDF rendering of the tenancy sheet from NorthGate_Tenant_Schedule_Rent_Roll_Dec2024.xlsx, the workbook the finding was extracted from."
+    },
+    model: {
+      role:"Investment model",
+      file:"NorthGate_Financial_Model_Assumptions_Snapshot_Dec2025.pdf",
+      sourceNote:"Investment model assumptions snapshot. Source of the Year 7 disposal, the 7.5% exit cap rate (divestment_parameters.exit_cap_rate), and the exit value."
+    },
+    boardminutes: {
+      role:"Board minutes",
+      file:"Board_Meeting_Minutes_Feb2025.pdf",
+      sourceNote:"Board minutes confirming the disposal window in H1 2027 (Year 7). The minutes do not state a cap rate or exit value."
+    }
+  };
+
+  var ov = document.getElementById("ov");
+  var mrole = document.getElementById("mrole");
+  var mfile = document.getElementById("mfile");
+  var mbody = document.getElementById("mbody");
+
+  function close(){ ov.classList.remove("show"); mbody.innerHTML = ""; }
+  document.getElementById("mx").addEventListener("click", close);
+  ov.addEventListener("click", function(e){ if (e.target === ov) close(); });
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape") close(); });
+
+  function openDoc(id){
+    var d = DOCS[id];
+    if (!d) return;
+    mrole.textContent = d.role;
+    mfile.textContent = DATAROOM + d.file;
+    // attempt the real hosted asset; show an honest placeholder underneath in case it is not published
+    mbody.innerHTML =
+      '<div class="mph">' +
+        '<div class="mph-t">Opening published source</div>' +
+        '<div class="mph-p">' + DATAROOM + d.file + '</div>' +
+        '<div class="mph-n">' + d.sourceNote + ' If this pane stays blank, the rendering is not yet published at this path.</div>' +
+      '</div>' +
+      '<iframe src="' + DATAROOM + d.file + '" title="' + d.role + '"></iframe>';
+    ov.classList.add("show");
+  }
+
+  function openDerived(){
+    mrole.textContent = "Derived evidence";
+    mfile.textContent = "fo_nth_001_exit_window.py";
+    mbody.innerHTML =
+      '<div class="mderived">' +
+        'for tenancy in tenancies:            <span class="op"># 38 rows</span><br>' +
+        '&nbsp;&nbsp;if break_date in exit_window:    <span class="op"># H1 2027</span><br>' +
+        '&nbsp;&nbsp;&nbsp;&nbsp;at_risk += contracted_rent<br><br>' +
+        'at_risk            <span class="op">&rarr;</span> <span class="res">&pound;2,846,924</span>  <span class="op"># 5 tenancies</span><br>' +
+        'total_contracted   <span class="op">&rarr;</span> &pound;10,568,623<br>' +
+        'at_risk / total    <span class="op">&rarr;</span> <span class="res">0.269</span>  &nbsp;<span class="op"># 26.9%</span><br><br>' +
+        'emit Finding NTH-001 &mdash; Exit Window Structural Tension' +
+      '</div>';
+    ov.classList.add("show");
+  }
+
+  document.querySelectorAll("[data-doc]").forEach(function(el){
+    el.addEventListener("click", function(){
+      var id = el.getAttribute("data-doc");
+      if (id === "derived") openDerived();
+      else openDoc(id);
+    });
+  });
+
+  function clock(){
+    var d = new Date();
+    function p(x){ return (x<10?"0":"")+x; }
+    var el = document.getElementById("clock");
+    if (el) el.textContent = p(d.getUTCHours())+":"+p(d.getUTCMinutes())+":"+p(d.getUTCSeconds())+" UTC";
+  }
+  clock(); setInterval(clock, 1000);
+})();
+</script>
+</body>
+</html>

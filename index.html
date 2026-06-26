@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<!-- ReActive demo wrapper. ONE persistent left rail lives here and is drawn over every page;
+     the iframe is inset by the rail width (46px) so no page hides under it. The rail carries
+     the numbered navigation, the admin links (info / contact / disclaimer) and the ENGINE V1
+     status light. No page carries its own rail or its own ENGINE V1 anymore. The old bottom
+     pill is gone.
+     SET BEFORE DEPLOY: the CONTACT_EMAIL constant in the script below.
+     Adjust the four src paths in PAGES only if your repo layout differs from flat root. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReActive — Demo</title>
+<style>
+  :root {
+    --bg:#050505; --panel:#0a0a0a; --border:#262626;
+    --accent:#d4773a; --accent-br:#fb923c; --cyan:#5bbccf; --green:#5e9e6f;
+    --meta:#6a6a6a; --dim:#3a3a3a;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); overflow:hidden; }
+
+  /* the one rail */
+  #rail { position:fixed; left:0; top:0; bottom:0; width:46px; z-index:10;
+    background:var(--panel); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; align-items:center; padding:16px 0; font-family:var(--mono); }
+  #rnums { display:flex; flex-direction:column; align-items:center; width:100%; }
+  .rn { font-size:11px; letter-spacing:.06em; color:var(--cyan); cursor:pointer; padding:6px 0; width:100%; text-align:center; transition:color .15s; }
+  .rn:hover { color:#e8e8e8; }
+  .rn.on { color:var(--accent-br); cursor:default; }
+  #rail .rsp { flex:1; }
+  .rg { width:18px; height:18px; color:var(--dim); cursor:pointer; margin-bottom:15px; transition:color .15s; }
+  .rg:hover { color:var(--meta); }
+  .rdiv { width:18px; border-top:1px solid var(--border); margin:0 0 12px; }
+  .rled { width:6px; height:6px; border-radius:50%; background:var(--green); }
+  .rv1 { font-size:9px; color:var(--meta); margin-top:5px; letter-spacing:.12em; }
+
+  /* the page, inset by the rail width */
+  #frame { position:fixed; left:46px; top:0; right:0; bottom:0; border:0; background:var(--bg); }
+
+  /* admin panels (info / contact / disclaimer) */
+  #ov { position:fixed; inset:0; background:rgba(3,3,3,.74); display:none; align-items:center; justify-content:center; z-index:300; padding:20px; }
+  #ov.open { display:flex; }
+  .pnl { width:min(440px,100%); background:var(--panel); border:1px solid var(--border); padding:22px 24px 24px; font-family:var(--mono); }
+  .pnl-h { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .pnl-t { font-size:13px; color:var(--accent); letter-spacing:.05em; }
+  .pnl-x { cursor:pointer; color:var(--meta); font-size:13px; line-height:1; }
+  .pnl-x:hover { color:#e8e8e8; }
+  .pnl-b { font-size:12px; line-height:1.7; color:#b8b8b8; }
+  .pnl-b a { color:var(--cyan); }
+</style>
+</head>
+<body>
+
+  <div id="rail">
+    <div id="rnums"></div>
+    <div class="rsp"></div>
+    <svg class="rg" data-panel="info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" role="button" aria-label="Info"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="11" x2="12" y2="16"></line><circle cx="12" cy="7.5" r="0.6" fill="currentColor" stroke="none"></circle></svg>
+    <svg class="rg" data-panel="contact" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" role="button" aria-label="Contact"><rect x="3" y="5" width="18" height="14" rx="1.5"></rect><path d="M3.5 7l8.5 6 8.5-6"></path></svg>
+    <svg class="rg" data-panel="disclaimer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" role="button" aria-label="Disclaimer"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v4h4"></path><line x1="9" y1="12.5" x2="15" y2="12.5"></line><line x1="9" y1="16" x2="15" y2="16"></line></svg>
+    <div class="rdiv"></div>
+    <div class="rled" title="Engine V1 online"></div>
+    <div class="rv1">V1</div>
+  </div>
+
+  <iframe id="frame" title="ReActive demo page"></iframe>
+
+  <div id="ov">
+    <div class="pnl">
+      <div class="pnl-h"><span class="pnl-t" id="ov-title"></span><span class="pnl-x" id="ov-x" role="button" aria-label="Close">&#10005;</span></div>
+      <div class="pnl-b" id="ov-body"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ============ SET THIS BEFORE DEPLOY ============
+  var CONTACT_EMAIL = "REPLACE_ME@example.com";
+  // ================================================
+
+  // adjust these four paths only if your repo layout differs from flat root
+  var PAGES = [
+    { src:"entry_screen_test.html", n:"01" },
+    { src:"page_2.html",            n:"02" },
+    { src:"page_3.html",            n:"03" },
+    { src:"page_4.html",            n:"04" }
+  ];
+
+  var frame = document.getElementById("frame");
+  var rnums = document.getElementById("rnums");
+  var idx = 0, rnEls = [];
+
+  PAGES.forEach(function(p, i){
+    var el = document.createElement("div");
+    el.className = "rn";
+    el.textContent = p.n;
+    el.setAttribute("role","link");
+    el.setAttribute("tabindex","0");
+    el.setAttribute("aria-label","Go to page " + p.n);
+    el.addEventListener("click", function(){ go(i); });
+    el.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(i); } });
+    rnums.appendChild(el);
+    rnEls.push(el);
+  });
+
+  function go(i){
+    idx = Math.max(0, Math.min(PAGES.length - 1, i));
+    frame.src = PAGES[idx].src;
+    rnEls.forEach(function(el, j){ el.classList.toggle("on", j === idx); });
+    if (history.replaceState) history.replaceState(null, "", "#" + PAGES[idx].n);
+  }
+  window.__reactiveGo = go;
+
+  // admin panels
+  var PANELS = {
+    info: {
+      title: "ReActive",
+      body: "ReActive is a deterministic forensic intelligence platform for institutional real estate due diligence. It reconstructs a portfolio's declared structure from primary documents and tests that reconstruction for internal contradiction.<br><br>Detection only: it surfaces structural exceptions and quantifies the delta between reconstructed and reported values. It does not value, advise, or recommend.<br><br>LLM-assisted at extraction; deterministic everywhere downstream."
+    },
+    disclaimer: {
+      title: "Disclaimer",
+      body: "Demonstration environment. The datarooms and figures shown are constructed for demonstration and are illustrative of the method, not of any real portfolio.<br><br>ReActive surfaces structural exceptions for due diligence. Nothing shown here constitutes valuation, investment, legal, accounting, or tax advice, and no reliance should be placed on any figure or finding presented in this demo.<br><br>&copy; 2026 ReActive."
+    },
+    contact: {
+      title: "Contact",
+      body: 'Email: <a href="mailto:' + CONTACT_EMAIL + '">' + CONTACT_EMAIL + '</a>'
+    }
+  };
+  var ov = document.getElementById("ov");
+  var ovT = document.getElementById("ov-title");
+  var ovB = document.getElementById("ov-body");
+  function openPanel(k){ var p = PANELS[k]; if (!p) return; ovT.textContent = p.title; ovB.innerHTML = p.body; ov.classList.add("open"); }
+  function closePanel(){ ov.classList.remove("open"); }
+  Array.prototype.forEach.call(document.querySelectorAll(".rg"), function(ic){
+    ic.addEventListener("click", function(){ openPanel(ic.getAttribute("data-panel")); });
+  });
+  document.getElementById("ov-x").addEventListener("click", closePanel);
+  ov.addEventListener("click", function(e){ if (e.target === ov) closePanel(); });
+
+  // keys + hash deep-link
+  document.addEventListener("keydown", function(e){
+    if (ov.classList.contains("open")) { if (e.key === "Escape") closePanel(); return; }
+    if (e.key === "ArrowRight") go(idx + 1);
+    else if (e.key === "ArrowLeft") go(idx - 1);
+  });
+
+  var start = 0;
+  var h = (location.hash || "").replace("#", "");
+  PAGES.forEach(function(p, i){ if (p.n === h) start = i; });
+  go(start);
+})();
+</script>
+</body>
+</html>
